@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Questions · javascript.ai</title>
+<meta name="description" content="60+ real JavaScript interview questions with practical, senior-level answers.">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="./index.html">Home</a><span class="sep">/</span>Interview Questions</p>
+<span class="eyebrow"><span class="str">interview prep/01</span></span>
+<h1>Interview Questions</h1>
+<p class="lede">60+ real JavaScript interview questions, organized by topic, answered the way a senior engineer would answer them out loud — not just a definition, but why it matters in practice.</p>
+
+<div style="display:flex; gap:.6rem; align-items:center; margin: 1.2rem 0 1.6rem; flex-wrap:wrap;">
+  <button class="btn ghost" data-expand-all type="button" style="padding:.5rem .8rem;">expand all</button>
+  <button class="btn ghost" data-collapse-all type="button" style="padding:.5rem .8rem;">collapse all</button>
+</div>
+
+<div id="tagFilter" style="display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:2rem;">
+  <button class="tag active" data-tag="all" style="cursor:pointer;">All</button>
+  <button class="tag" data-tag="fundamentals" style="cursor:pointer;">Fundamentals</button>
+  <button class="tag" data-tag="functions" style="cursor:pointer;">Functions &amp; Closures</button>
+  <button class="tag" data-tag="this-oop" style="cursor:pointer;">this &amp; OOP</button>
+  <button class="tag" data-tag="async" style="cursor:pointer;">Async &amp; Event Loop</button>
+  <button class="tag" data-tag="arrays-objects" style="cursor:pointer;">Arrays &amp; Objects</button>
+  <button class="tag" data-tag="modules" style="cursor:pointer;">Modules &amp; Ecosystem</button>
+  <button class="tag" data-tag="dom" style="cursor:pointer;">DOM &amp; Browser</button>
+  <button class="tag" data-tag="output" style="cursor:pointer;">Predict the Output</button>
+</div>
+<style>#tagFilter .tag.active{ background: var(--amber); color: var(--amber-ink); border-color: var(--amber); font-weight:600; }</style>
+
+<h2>Fundamentals</h2>
+<div class="qa" data-tags="fundamentals"><button class="qa__q"><span class="idx">Q1</span>What's the difference between undefined and undeclared?<span class="chev">›</span></button><div class="qa__a"><p><code>undefined</code> means a variable exists (declared) but has no assigned value. <em>Undeclared</em> means the variable was never declared at all — referencing it throws a <code>ReferenceError</code> (except <code>typeof undeclaredVar</code>, which safely returns <code>"undefined"</code> without throwing).</p></div></div>
+
+<div class="qa" data-tags="fundamentals"><button class="qa__q"><span class="idx">Q2</span>What is NaN, and how do you correctly check for it?<span class="chev">›</span></button><div class="qa__a"><p><code>NaN</code> ("Not a Number") is the result of an invalid numeric operation, like <code>0/0</code> or <code>parseInt("abc")</code>. It's the only value in JavaScript that isn't equal to itself (<code>NaN === NaN</code> is <code>false</code>), so use <code>Number.isNaN(value)</code> to check for it — never <code>value === NaN</code>.</p></div></div>
+
+<div class="qa" data-tags="fundamentals"><button class="qa__q"><span class="idx">Q3</span>Explain hoisting.<span class="chev">›</span></button><div class="qa__a"><p>Before code executes, the engine scans the current scope and allocates memory for variable and function declarations. <code>var</code> declarations are hoisted and initialized to <code>undefined</code>; <code>let</code>/<code>const</code> are hoisted but left uninitialized (the "temporal dead zone") until their declaration line runs; function declarations are hoisted with their full body, so they're callable before their line in the source.</p></div></div>
+
+<div class="qa" data-tags="fundamentals"><button class="qa__q"><span class="idx">Q4</span>What is strict mode and what does it change?<span class="chev">›</span></button><div class="qa__a"><p><code>"use strict"</code> opts into a stricter parsing and error-handling mode: it throws on assignments to undeclared variables, disallows duplicate parameter names, makes <code>this</code> undefined instead of the global object in plain function calls, and disallows several unsafe legacy features. ES modules and classes are strict mode by default automatically.</p></div></div>
+
+<div class="qa" data-tags="fundamentals"><button class="qa__q"><span class="idx">Q5</span>What's the difference between synchronous and asynchronous code, in plain terms?<span class="chev">›</span></button><div class="qa__a"><p>Synchronous code runs top to bottom, each line waiting for the previous one to finish, blocking further execution. Asynchronous code lets long-running operations (network calls, timers, file I/O) happen in the background without freezing the rest of the program, with results delivered later via callbacks, promises, or async/await.</p></div></div>
+
+<div class="qa" data-tags="fundamentals"><button class="qa__q"><span class="idx">Q6</span>What are template literals, and what can they do that string concatenation can't as cleanly?<span class="chev">›</span></button><div class="qa__a"><p>Backtick-delimited strings supporting embedded expressions (<code>`Hi ${name}`</code>) and multi-line strings without escape characters. They also enable "tagged templates" — a function can intercept and transform the literal's pieces, which is how libraries like styled-components parse CSS-in-JS.</p></div></div>
+
+<h2>Functions & Closures</h2>
+<div class="qa" data-tags="functions"><button class="qa__q"><span class="idx">Q7</span>What is a higher-order function?<span class="chev">›</span></button><div class="qa__a"><p>A function that takes another function as an argument, returns a function, or both. <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>debounce</code>, and <code>curry</code> are all higher-order functions — this pattern is central to functional-style JavaScript.</p></div></div>
+
+<div class="qa" data-tags="functions"><button class="qa__q"><span class="idx">Q8</span>What is an IIFE and why would you use one?<span class="chev">›</span></button><div class="qa__a"><p>An Immediately Invoked Function Expression — <code>(function(){ ... })()</code> — runs as soon as it's defined, creating an isolated scope. Before ES6 modules and block scoping, it was the standard way to avoid polluting the global namespace. Today it's mostly seen in bundler output and legacy code, replaced by modules and blocks.</p></div></div>
+
+<div class="qa" data-tags="functions"><button class="qa__q"><span class="idx">Q9</span>What's the difference between a pure function and one with side effects?<span class="chev">›</span></button><div class="qa__a"><p>A pure function always returns the same output for the same input and doesn't modify anything outside its own scope (no mutating arguments, no network calls, no touching global state). Side effects — logging, DOM updates, mutating a passed-in object — make code harder to test and reason about, which is why pure functions are preferred where practical.</p></div></div>
+
+<div class="qa" data-tags="functions"><button class="qa__q"><span class="idx">Q10</span>Why can't arrow functions be used as constructors?<span class="chev">›</span></button><div class="qa__a"><p>Arrow functions have no internal <code>[[Construct]]</code> method and no <code>prototype</code> property — both of which <code>new</code> depends on to build a new object and link its prototype chain. Calling <code>new</code> on an arrow function throws a <code>TypeError</code> immediately.</p></div></div>
+
+<div class="qa" data-tags="functions"><button class="qa__q"><span class="idx">Q11</span>What's function currying used for in real code?<span class="chev">›</span></button><div class="qa__a"><p>Pre-configuring a function with some arguments to create a more specific, reusable version — e.g. turning a generic <code>request(method, url, body)</code> into <code>get = curry(request)("GET")</code>. It's common in functional composition pipelines and configuration-heavy utilities.</p></div></div>
+
+<div class="qa" data-tags="functions"><button class="qa__q"><span class="idx">Q12</span>What happens if you don't use "use strict" and assign to an undeclared variable inside a function?<span class="chev">›</span></button><div class="qa__a"><p>Non-strict mode silently creates a variable on the global object rather than throwing — a classic source of hard-to-trace bugs. Strict mode (default in modules and classes) throws a <code>ReferenceError</code> instead, which is one of many reasons to prefer modules.</p></div></div>
+
+<h2>this & OOP</h2>
+<div class="qa" data-tags="this-oop"><button class="qa__q"><span class="idx">Q13</span>What is the prototype chain?<span class="chev">›</span></button><div class="qa__a"><p>Every object has an internal link to another object (its prototype). When you access a property that doesn't exist on the object itself, JavaScript walks up this chain of prototypes until it finds the property or reaches <code>null</code>. This is how inheritance works natively in JavaScript.</p></div></div>
+
+<div class="qa" data-tags="this-oop"><button class="qa__q"><span class="idx">Q14</span>What's the difference between Object.create(null) and {}?<span class="chev">›</span></button><div class="qa__a"><p><code>{}</code> is shorthand for an object whose prototype is <code>Object.prototype</code>, inheriting methods like <code>toString</code> and <code>hasOwnProperty</code>. <code>Object.create(null)</code> creates an object with <em>no</em> prototype at all — useful as a pure dictionary/hash map with zero risk of key collisions with inherited method names.</p></div></div>
+
+<div class="qa" data-tags="this-oop"><button class="qa__q"><span class="idx">Q15</span>What are getters and setters for?<span class="chev">›</span></button><div class="qa__a"><p>They let a property look like a plain field from the outside while running computed logic underneath — e.g. a <code>fullName</code> getter that combines <code>firstName</code> and <code>lastName</code>, or a setter that validates a value before storing it. Defined with <code>get</code>/<code>set</code> in an object literal or class.</p></div></div>
+
+<div class="qa" data-tags="this-oop"><button class="qa__q"><span class="idx">Q16</span>What's the difference between instanceof and typeof?<span class="chev">›</span></button><div class="qa__a"><p><code>typeof</code> returns a string naming the primitive type ("string", "number", "object", "function", etc.) — coarse-grained and doesn't distinguish object types. <code>instanceof</code> checks whether an object's prototype chain includes a given constructor's <code>prototype</code> — it answers "is this specifically an Array / a custom class / etc."</p></div></div>
+
+<div class="qa" data-tags="this-oop"><button class="qa__q"><span class="idx">Q17</span>What are private class fields and why were they added?<span class="chev">›</span></button><div class="qa__a"><p><code>#fieldName</code> (ES2022) creates a field genuinely inaccessible from outside the class — not just a naming convention like the old <code>_field</code> underscore pattern, which was always publicly accessible. It gives JavaScript real encapsulation for the first time without relying on closures or WeakMaps as a workaround.</p></div></div>
+
+<h2>Async & Event Loop</h2>
+<div class="qa" data-tags="async"><button class="qa__q"><span class="idx">Q18</span>What's a race condition, and how can promises cause one?<span class="chev">›</span></button><div class="qa__a"><p>A race condition happens when the outcome depends on unpredictable timing between concurrent operations. A classic JS example: firing two API requests for search-as-you-type where a slower earlier request resolves <em>after</em> a faster later one, overwriting the correct, newer result with stale data. Fix it by tracking a request ID/AbortController and ignoring out-of-date responses.</p></div></div>
+
+<div class="qa" data-tags="async"><button class="qa__q"><span class="idx">Q19</span>What does AbortController do?<span class="chev">›</span></button><div class="qa__a"><p>It provides a way to cancel an in-flight async operation, most commonly a <code>fetch</code> request. You create an <code>AbortController</code>, pass its <code>.signal</code> to <code>fetch</code>, and calling <code>.abort()</code> rejects the fetch promise with an <code>AbortError</code> — essential for cancelling stale requests (e.g. when a user navigates away or types a new search query).</p></div></div>
+
+<div class="qa" data-tags="async"><button class="qa__q"><span class="idx">Q20</span>Can you await a non-promise value?<span class="chev">›</span></button><div class="qa__a"><p>Yes — <code>await</code> works on any value. If it's not a thenable, JavaScript wraps it in <code>Promise.resolve()</code> automatically and resumes on the next microtask tick. <code>await 5</code> is valid and simply yields <code>5</code>.</p></div></div>
+
+<div class="qa" data-tags="async"><button class="qa__q"><span class="idx">Q21</span>What's the difference between an unhandled promise rejection and a thrown synchronous error?<span class="chev">›</span></button><div class="qa__a"><p>A synchronous throw halts execution immediately and can be caught by any enclosing <code>try/catch</code> up the call stack. A rejected promise with no <code>.catch()</code> (or enclosing <code>try/catch</code> around an <code>await</code>) doesn't stop anything synchronously — it fires an <code>unhandledrejection</code> event, which in Node can even crash the process depending on configuration.</p></div></div>
+
+<div class="qa" data-tags="async"><button class="qa__q"><span class="idx">Q22</span>What is requestAnimationFrame and how is it different from setTimeout?<span class="chev">›</span></button><div class="qa__a"><p><code>requestAnimationFrame(callback)</code> schedules a callback to run right before the browser's next repaint, synced to the display's refresh rate (typically ~60fps) — ideal for animations. <code>setTimeout</code> has no relationship to the rendering cycle and can run mid-frame, causing jank in visual updates.</p></div></div>
+
+<h2>Arrays & Objects</h2>
+<div class="qa" data-tags="arrays-objects"><button class="qa__q"><span class="idx">Q23</span>How do you check if a variable is an array?<span class="chev">›</span></button><div class="qa__a"><p><code>Array.isArray(value)</code> — the reliable, spec-recommended way. <code>typeof</code> returns <code>"object"</code> for arrays (unhelpful), and <code>instanceof Array</code> fails across different execution contexts (e.g. an array passed from an iframe).</p></div></div>
+
+<div class="qa" data-tags="arrays-objects"><button class="qa__q"><span class="idx">Q24</span>What's the difference between Object.freeze and const for immutability?<span class="chev">›</span></button><div class="qa__a"><p><code>const</code> only prevents reassigning the <em>variable binding</em> — the object's properties remain fully mutable. <code>Object.freeze()</code> actually prevents adding, removing, or changing properties on the object itself (shallowly — nested objects are still mutable unless frozen too, so deep freezing requires a recursive helper).</p></div></div>
+
+<div class="qa" data-tags="arrays-objects"><button class="qa__q"><span class="idx">Q25</span>What's the difference between a Map and a plain object as a dictionary?<span class="chev">›</span></button><div class="qa__a"><p><code>Map</code> allows any value (including objects and functions) as a key, preserves insertion order reliably, has a direct <code>.size</code> property, and doesn't have prototype-chain key collisions. Plain objects coerce all keys to strings and inherit properties from <code>Object.prototype</code> unless created with <code>Object.create(null)</code>.</p></div></div>
+
+<div class="qa" data-tags="arrays-objects"><button class="qa__q"><span class="idx">Q26</span>How does Array.prototype.reduce work, step by step?<span class="chev">›</span></button><div class="qa__a"><p><code>reduce(callback, initialValue)</code> iterates the array left to right, calling <code>callback(accumulator, currentItem, index, array)</code> each time. The callback's return value becomes the <code>accumulator</code> passed into the next call. After the last item, the final accumulator is returned. Without an <code>initialValue</code>, the first array element is used as the starting accumulator and iteration begins at index 1.</p></div></div>
+
+<div class="qa" data-tags="arrays-objects"><button class="qa__q"><span class="idx">Q27</span>What is a WeakMap and when would you reach for one?<span class="chev">›</span></button><div class="qa__a"><p>A <code>WeakMap</code> holds object keys "weakly" — if there's no other reference to a key object, it can be garbage collected even while still in the WeakMap, and the entry disappears automatically. It's used for attaching private/metadata to objects (like caching computed results per DOM node) without causing memory leaks or preventing cleanup.</p></div></div>
+
+<h2>Modules & Ecosystem</h2>
+<div class="qa" data-tags="modules"><button class="qa__q"><span class="idx">Q28</span>What is tree-shaking?<span class="chev">›</span></button><div class="qa__a"><p>A build-time optimization where a bundler analyzes static <code>import</code>/<code>export</code> statements to determine which exports are actually used, then removes ("shakes off") the rest from the final bundle — reducing shipped file size. It relies on ESM's static structure; it generally doesn't work reliably with CommonJS.</p></div></div>
+
+<div class="qa" data-tags="modules"><button class="qa__q"><span class="idx">Q29</span>What does "npm" actually manage?<span class="chev">›</span></button><div class="qa__a"><p>npm (Node Package Manager) installs, versions, and resolves dependencies listed in <code>package.json</code>, downloading them from the npm registry into <code>node_modules</code>. It also runs defined scripts (<code>npm run build</code>) and manages semantic versioning ranges (<code>^</code>/<code>~</code>) so projects can safely receive compatible updates.</p></div></div>
+
+<div class="qa" data-tags="modules"><button class="qa__q"><span class="idx">Q30</span>What's the difference between dependencies and devDependencies in package.json?<span class="chev">›</span></button><div class="qa__a"><p><code>dependencies</code> are required at runtime in production (e.g. a UI library the app imports). <code>devDependencies</code> are only needed during development or build (test runners, linters, bundlers) and aren't installed when a package is installed as a dependency elsewhere with <code>--production</code>.</p></div></div>
+
+<div class="qa" data-tags="modules"><button class="qa__q"><span class="idx">Q31</span>What is a polyfill, and how is it different from a transpiler like Babel?<span class="chev">›</span></button><div class="qa__a"><p>A polyfill is runtime code that implements a missing feature (like adding <code>Array.prototype.flat</code> to an old engine that lacks it) — it patches the environment. A transpiler like Babel rewrites your <em>syntax</em> at build time (e.g. converting arrow functions to regular functions) — it changes the code itself, not the runtime. Modern syntax often needs transpiling; missing APIs need polyfilling.</p></div></div>
+
+<h2>DOM & Browser</h2>
+<div class="qa" data-tags="dom"><button class="qa__q"><span class="idx">Q32</span>What's the difference between localStorage, sessionStorage, and cookies?<span class="chev">›</span></button><div class="qa__a"><p><code>localStorage</code> persists indefinitely per origin, until explicitly cleared. <code>sessionStorage</code> persists only for the tab's lifetime. Both store roughly 5-10MB, are synchronous, and aren't sent with HTTP requests. Cookies are much smaller (~4KB), can have expiry dates, and are automatically sent with every matching request to the server — which is why they're used for auth tokens the server needs to read.</p></div></div>
+
+<div class="qa" data-tags="dom"><button class="qa__q"><span class="idx">Q33</span>What causes layout thrashing, and how do you avoid it?<span class="chev">›</span></button><div class="qa__a"><p>Repeatedly interleaving DOM reads (like <code>offsetHeight</code>) and writes (like <code>style.height =</code>) in a loop forces the browser to recalculate layout synchronously on every read, instead of batching. Avoid it by reading all needed values first, then writing all changes, or by batching writes with a <code>DocumentFragment</code>/<code>requestAnimationFrame</code>.</p></div></div>
+
+<div class="qa" data-tags="dom"><button class="qa__q"><span class="idx">Q34</span>What is the Shadow DOM?<span class="chev">›</span></button><div class="qa__a"><p>An encapsulated DOM subtree attached to an element, with its own scoped styles and structure that don't leak in or out of the main document — the mechanism behind native <code>&lt;video&gt;</code> controls and Web Components. It prevents a component's internal markup and CSS from clashing with the rest of the page.</p></div></div>
+
+<h2>Predict the Output</h2>
+<div class="qa" data-tags="output"><button class="qa__q"><span class="idx">Q35</span>console.log(1 + "2" + 3); console.log(1 + 2 + "3");<span class="chev">›</span></button><div class="qa__a"><p><code>"123"</code>, then <code>"33"</code>. The <code>+</code> operator evaluates left to right: <code>1 + "2"</code> coerces to string concatenation first, giving <code>"12"</code>, then <code>+ 3</code> concatenates again → <code>"123"</code>. In the second, <code>1 + 2</code> is number addition (both numbers) → <code>3</code>, then <code>3 + "3"</code> concatenates → <code>"33"</code>.</p></div></div>
+
+<div class="qa" data-tags="output"><button class="qa__q"><span class="idx">Q36</span>What does [] + [] and [] + {} evaluate to?<span class="chev">›</span></button><div class="qa__a"><p><code>[] + []</code> → <code>""</code> (both arrays coerce to empty strings, concatenated). <code>[] + {}</code> → <code>"[object Object]"</code> (the array coerces to <code>""</code>, the object to its default string tag, concatenated). Both are consequences of the <code>+</code> operator's ToPrimitive coercion rules for objects.</p></div></div>
+
+<div class="qa" data-tags="output"><button class="qa__q"><span class="idx">Q37</span>What does this log: for (var i = 0; i &lt; 3; i++) { setTimeout(() =&gt; console.log(i)); }<span class="chev">›</span></button><div class="qa__a"><p><code>3, 3, 3</code>. All three arrow functions close over the <em>same</em> function-scoped <code>i</code> (declared with <code>var</code>), and by the time any <code>setTimeout</code> callback runs, the loop has already finished and <code>i</code> is <code>3</code>. Swapping <code>var</code> for <code>let</code> gives each iteration its own binding, logging <code>0, 1, 2</code> instead.</p></div></div>
+
+<div class="qa" data-tags="output"><button class="qa__q"><span class="idx">Q38</span>console.log(typeof typeof 1);<span class="chev">›</span></button><div class="qa__a"><p><code>"string"</code>. <code>typeof 1</code> evaluates to the string <code>"number"</code>; <code>typeof</code> applied to any string always returns <code>"string"</code>.</p></div></div>
+
+<div class="qa" data-tags="output"><button class="qa__q"><span class="idx">Q39</span>let a = { val: 1 }; let b = a; b.val = 2; console.log(a.val); — and why?<span class="chev">›</span></button><div class="qa__a"><p><code>2</code>. Objects are assigned and passed by reference — <code>b = a</code> copies the reference (pointer), not the object, so <code>a</code> and <code>b</code> point at the exact same underlying object in memory. Mutating through either variable is visible through the other.</p></div></div>
+
+<div class="prevnext">
+  <a class="prev" href="./pages/dom/dom-events.html"><span class="lbl">← Explore lessons</span>Back to curriculum</a>
+  <a class="next" href="./pages/practice/coding-challenges.html"><span class="lbl">Next</span>Coding Challenges →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = './';</script>
+<script src="./js/site-data.js"></script>
+<script src="./js/include.js"></script>
+<script src="./js/main.js"></script>
+</body>
+</html>

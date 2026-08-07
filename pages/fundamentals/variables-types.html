@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variables & Data Types · javascript.ai</title>
+<meta name="description" content="var, let, const, primitives, objects, type coercion and typeof quirks.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Fundamentals<span class="sep">/</span>Variables &amp; Data Types</p>
+<span class="eyebrow"><span class="str">fundamentals/01</span></span>
+<h1>Variables & Data Types</h1>
+<p class="lede">Three ways to declare a variable, seven primitive types, and a coercion system that trips up even experienced developers. This is the foundation everything else sits on.</p>
+
+<h2>var, let, and const</h2>
+<p><code>var</code> is function-scoped and hoisted with an initial value of <code>undefined</code>. <code>let</code> and <code>const</code> are block-scoped and hoisted into a "temporal dead zone" — they exist, but touching them before their declaration line throws.</p>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">scope.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function scopeDemo() {
+  if (true) {
+    var fn = "I leak out of the block";
+    let bl = "I stay inside the block";
+  }
+  console.log(fn); // "I leak out of the block"
+  console.log(bl); // ReferenceError: bl is not defined
+}
+
+console.log(typeof neverDeclared); // "undefined" — no error
+console.log(hoisted);              // undefined (not an error — var is hoisted)
+var hoisted = 1;
+
+console.log(tdz); // ReferenceError: Cannot access 'tdz' before initialization
+let tdz = 2;</code></pre>
+</div>
+
+<div class="callout tip">
+  <span class="callout__label">Rule of thumb</span>
+  <p>Default to <code>const</code>. Switch to <code>let</code> only when you know the binding will be reassigned. Avoid <code>var</code> in new code — it exists today purely for backward compatibility.</p>
+</div>
+
+<p><code>const</code> prevents <em>reassignment</em> of the binding, not mutation of the value. This is the single most common misconception:</p>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">const-mutation.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const user = { name: "Ada" };
+user.name = "Grace";     // ✅ fine — mutating the object
+user.age = 36;           // ✅ fine — adding a property
+user = { name: "Linus" }; // ❌ TypeError: Assignment to constant variable.
+
+const list = [1, 2, 3];
+list.push(4);   // ✅ fine
+list = [];      // ❌ TypeError</code></pre>
+</div>
+
+<h2>The eight data types</h2>
+<p>JavaScript has seven <strong>primitive</strong> types plus <code>object</code>. Primitives are immutable and compared by value; objects are compared by reference.</p>
+
+<table>
+  <thead><tr><th>Type</th><th>typeof result</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>Number</td><td><code>"number"</code></td><td><code>42</code>, <code>3.14</code>, <code>NaN</code>, <code>Infinity</code></td></tr>
+    <tr><td>BigInt</td><td><code>"bigint"</code></td><td><code>9007199254740993n</code></td></tr>
+    <tr><td>String</td><td><code>"string"</code></td><td><code>"hi"</code>, <code>'hi'</code>, <code>`hi`</code></td></tr>
+    <tr><td>Boolean</td><td><code>"boolean"</code></td><td><code>true</code>, <code>false</code></td></tr>
+    <tr><td>Undefined</td><td><code>"undefined"</code></td><td>a declared, unassigned variable</td></tr>
+    <tr><td>Null</td><td><code>"object"</code> (a famous bug)</td><td><code>null</code> — intentional absence</td></tr>
+    <tr><td>Symbol</td><td><code>"symbol"</code></td><td><code>Symbol("id")</code> — guaranteed-unique key</td></tr>
+    <tr><td>Object</td><td><code>"object"</code> (or <code>"function"</code>)</td><td><code>{}</code>, <code>[]</code>, <code>function(){}</code>, <code>new Date()</code></td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <span class="callout__label">Spec quirk</span>
+  <p><code>typeof null === "object"</code> is a bug from JavaScript's first implementation in 1995 that shipped to production and can never be fixed without breaking the web. Always check for null explicitly with <code>value === null</code>.</p>
+</div>
+
+<h2>Type coercion: == vs ===</h2>
+<p><code>===</code> ("strict equality") never converts types. <code>==</code> ("loose equality") converts one or both operands before comparing, following the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness" target="_blank" rel="noopener">Abstract Equality Comparison algorithm</a>.</p>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">coercion.js</span><button class="code__copy">copy</button></div>
+  <pre><code>0 == false;        // true  — false becomes 0
+0 === false;       // false — different types, no conversion
+"" == 0;           // true  — "" becomes 0
+null == undefined; // true  — special-cased by spec
+null === undefined;// false
+NaN == NaN;        // false — NaN never equals anything, including itself
+[] == false;       // true  — [] → "" → 0
+[] == ![];         // true  — ![] is false, then coerced as above
+
+Number.isNaN(NaN);      // true — the correct way to test for NaN
+Object.is(NaN, NaN);    // true — Object.is fixes both NaN and -0 edge cases
+Object.is(-0, 0);       // false
+-0 === 0;               // true</code></pre>
+  <div class="output">
+    <span class="output__label">why this matters</span>
+    <span class="output__line">Almost every style guide bans <code>==</code> for exactly this reason. Use <code>===</code> by default, and reach for <code>==</code> only for the one legitimate idiom: <code>value == null</code> to check for both null and undefined at once.</span>
+  </div>
+</div>
+
+<h3>Truthy and falsy values</h3>
+<p>Only <strong>eight</strong> values are falsy in JavaScript. Everything else — including <code>"0"</code>, <code>"false"</code>, empty objects, and empty arrays — is truthy.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">falsy.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// The complete list of falsy values:
+false, 0, -0, 0n, "", null, undefined, NaN
+
+// Everything else is truthy, including:
+Boolean("0");     // true — non-empty string
+Boolean("false"); // true — non-empty string
+Boolean([]);      // true — empty array is an object
+Boolean({});      // true — empty object</code></pre>
+</div>
+
+<h2>Primitives vs. reference types</h2>
+<p>Primitives are copied by value. Objects (including arrays and functions) are copied by reference — assignment copies a pointer, not the data.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">by-value-vs-reference.js</span><button class="code__copy">copy</button></div>
+  <pre><code>let a = 10;
+let b = a;
+b = 20;
+console.log(a); // 10 — a is untouched, b is an independent copy
+
+const obj1 = { count: 1 };
+const obj2 = obj1;
+obj2.count = 2;
+console.log(obj1.count); // 2 — obj1 and obj2 point to the same object</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between null and undefined?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>undefined</code> means a variable has been declared but never assigned a value — it's the engine's default. <code>null</code> is an explicit assignment meaning "intentionally empty." Functions that don't return anything return <code>undefined</code>; a developer sets <code>null</code> on purpose to signal absence.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Why does 0.1 + 0.2 not equal 0.3?<span class="chev">›</span></button>
+  <div class="qa__a"><p>JavaScript numbers are IEEE-754 double-precision floats, which can't represent most decimal fractions exactly in binary. <code>0.1 + 0.2</code> evaluates to <code>0.30000000000000004</code>. Compare with a tolerance (<code>Math.abs(a - b) &lt; Number.EPSILON</code>) or work in integers (e.g. cents instead of dollars) when precision matters.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Is JavaScript strongly or weakly typed?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Weakly (loosely) typed, and dynamically typed. "Weak" means the engine implicitly converts between types (e.g. <code>"5" - 1 === 4</code>); "dynamic" means a variable's type is determined at runtime and can change. TypeScript adds static typing on top without changing JavaScript's runtime behavior.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../index.html"><span class="lbl">← Back to</span>Home</a>
+  <a class="next" href="../../pages/fundamentals/functions-closures.html"><span class="lbl">Next</span>Functions, Scope & Closures →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

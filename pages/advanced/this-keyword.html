@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The this Keyword · javascript.ai</title>
+<meta name="description" content="How this is bound at call time, and every gotcha that trips developers up.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Core mechanics<span class="sep">/</span>this</p>
+<span class="eyebrow"><span class="str">core mechanics/01</span></span>
+<h1>The this Keyword</h1>
+<p class="lede"><code>this</code> is not determined by where a function is written — it's determined by <strong>how the function is called</strong>. That single rule resolves 90% of "why is this undefined" bugs.</p>
+
+<h2>The four binding rules</h2>
+<p>In order of precedence, from weakest to strongest:</p>
+
+<h3>1. Default binding — plain function calls</h3>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">default-binding.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function whoAmI() { console.log(this); }
+whoAmI();
+// Non-strict mode: `this` is the global object (window / globalThis)
+// Strict mode ("use strict"): `this` is undefined</code></pre>
+</div>
+
+<h3>2. Implicit binding — called as a method</h3>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">implicit-binding.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const user = {
+  name: "Zainab",
+  greet() { console.log(`Hi, I'm ${this.name}`); },
+};
+user.greet(); // "Hi, I'm Zainab" — this = user, the object left of the dot
+
+const detached = user.greet;
+detached(); // "Hi, I'm undefined" — this LOST its binding; called plainly now</code></pre>
+</div>
+
+<h3>3. Explicit binding — call, apply, bind</h3>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">explicit-binding.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function introduce(greeting) { return `${greeting}, I'm ${this.name}`; }
+const person = { name: "Tunde" };
+
+introduce.call(person, "Hello");      // args passed individually — "Hello, I'm Tunde"
+introduce.apply(person, ["Hi"]);      // args passed as an array — "Hi, I'm Tunde"
+
+const bound = introduce.bind(person); // returns a NEW function, permanently bound
+bound("Hey");                          // "Hey, I'm Tunde" — even if called detached later</code></pre>
+</div>
+
+<h3>4. new binding — constructor calls</h3>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">new-binding.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function Car(model) {
+  this.model = model; // `this` = the brand-new object `new` just created
+}
+const car = new Car("Corolla");
+console.log(car.model); // "Corolla"
+
+// `new` does four things:
+// 1. Creates a new empty object
+// 2. Links its prototype to Car.prototype
+// 3. Calls Car with `this` bound to the new object
+// 4. Returns the new object (unless the function explicitly returns another object)</code></pre>
+</div>
+
+<h2>Arrow functions: no this of their own</h2>
+<p>Arrow functions don't have their own <code>this</code>. They capture it lexically from the enclosing scope at the moment they're <em>defined</em> — none of the four rules above apply to them.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">arrow-this.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const timer = {
+  seconds: 0,
+  start() {
+    // Arrow function inherits `this` from start()'s scope — the timer object
+    setInterval(() => { this.seconds++; }, 1000);
+  },
+  startBroken() {
+    // Regular function loses `this` — setInterval calls it plainly
+    setInterval(function () { this.seconds++; }, 1000); // this = undefined/window, breaks
+  },
+};
+
+timer.start(); // works — this.seconds increments correctly</code></pre>
+</div>
+<div class="callout tip">
+  <span class="callout__label">Practical rule</span>
+  <p>Use regular functions (or method shorthand) for object methods and anything called with <code>new</code>. Use arrow functions for callbacks nested inside a method, where you want <code>this</code> to keep pointing at the outer object.</p>
+</div>
+
+<h2>Precedence, all together</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">precedence.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function show() { console.log(this.label); }
+const objA = { label: "A", show };
+const objB = { label: "B" };
+
+objA.show();                 // "A" — implicit binding
+objA.show.call(objB);        // "B" — explicit beats implicit
+const boundToB = show.bind(objB);
+boundToB.call(objA);         // "B" — bind is permanent; call can't override it
+new boundToB();                // {} — `new` even beats a hard bind, creating a fresh object</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What determines the value of this in JavaScript?<span class="chev">›</span></button>
+  <div class="qa__a"><p>How the function is <em>called</em>, not where it's defined (with the one exception of arrow functions, which inherit <code>this</code> lexically). The four rules in order of precedence: <code>new</code> binding &gt; explicit binding (<code>call</code>/<code>apply</code>/<code>bind</code>) &gt; implicit binding (method call) &gt; default binding (plain call).</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between call, apply, and bind?<span class="chev">›</span></button>
+  <div class="qa__a"><p>All three explicitly set <code>this</code>. <code>call(thisArg, a, b, c)</code> invokes the function immediately with arguments listed individually. <code>apply(thisArg, [a, b, c])</code> invokes immediately with arguments as an array. <code>bind(thisArg)</code> doesn't invoke anything — it returns a new function permanently bound to <code>thisArg</code>, to be called later.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Why does this become undefined inside a callback passed to setTimeout?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Because <code>setTimeout</code> invokes the callback as a plain function call — no object precedes it — so default binding kicks in (<code>undefined</code> in strict mode). Fix it with an arrow function (to inherit the surrounding <code>this</code>) or with <code>.bind(this)</code>.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/fundamentals/objects-arrays.html"><span class="lbl">← Previous</span>Objects & Arrays</a>
+  <a class="next" href="../../pages/advanced/prototypes-oop.html"><span class="lbl">Next</span>Prototypes & OOP →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

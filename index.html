@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>javascript.ai — A practical, deep-dive JavaScript reference</title>
+<meta name="description" content="An open-source, practical JavaScript reference: fundamentals to internals, ESM, the ecosystem, interview questions, and real projects.">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .hero{ background: var(--ink); color:#fff; padding: 3.5rem 1.5rem 4.5rem; }
+  .hero__inner{ max-width: 1100px; margin: 0 auto; display:grid; grid-template-columns: 1.05fr 1fr; gap: 3rem; align-items: start; }
+  .hero h1{ color:#fff; font-size: clamp(2rem,4vw,3rem); margin: 0 0 1rem; }
+  .hero h1 .amber{ color: var(--amber); }
+  .hero p.lede{ color:#c7cad0; margin-bottom: 1.6rem; }
+  .hero__cta{ display:flex; gap: .8rem; flex-wrap:wrap; margin-bottom: 2rem; }
+  .stat-row{ display:flex; gap: 1.6rem; flex-wrap:wrap; }
+  .stat{ font-family:'JetBrains Mono',monospace; }
+  .stat b{ display:block; font-size: 1.5rem; color: var(--amber); }
+  .stat span{ font-size:.72rem; color:#9599a0; text-transform:uppercase; letter-spacing:.04em; }
+
+  .terminal{ background: var(--ink-soft); border:1px solid var(--line-dark); border-radius: 10px; overflow:hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  .terminal__bar{ display:flex; align-items:center; gap:.5rem; padding:.6rem .8rem; background:#12141a; border-bottom:1px solid var(--line-dark); }
+  .terminal__bar span{ width:9px; height:9px; border-radius:50%; background:#3a3e46; }
+  .terminal__bar b{ margin-left:.5rem; font-family:'JetBrains Mono',monospace; font-size:.72rem; color:#8b8f97; font-weight:500; }
+  #replLog{ min-height: 190px; max-height: 260px; overflow-y:auto; padding: .9rem 1rem; font-family:'JetBrains Mono',monospace; font-size:.82rem; color:#d9dce2; }
+  .terminal__input-row{ display:flex; gap:.5rem; border-top:1px solid var(--line-dark); padding:.6rem .7rem; align-items:flex-end; }
+  .terminal__input-row span{ color: var(--amber); font-family:'JetBrains Mono',monospace; padding-bottom:.5rem; }
+  #replInput{ flex:1; resize:none; background:none; border:0; color:#e7e9ee; font-family:'JetBrains Mono',monospace; font-size:.85rem; padding:.5rem; height: 2.4rem; }
+  #replInput:focus{ outline:none; }
+  #replRun{ background: var(--amber); color: var(--amber-ink); border:0; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:.75rem; font-weight:700; padding:.45rem .7rem; cursor:pointer; }
+  .terminal__hint{ font-size:.7rem; color:#6b7078; padding: 0 1rem .7rem; font-family:'JetBrains Mono',monospace; }
+
+  .section{ max-width: 1100px; margin: 0 auto; padding: 3.5rem 1.5rem; }
+  .section h2{ border:0; padding:0; margin-top:0; }
+  .why-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); gap: 1.4rem; margin-top: 1.6rem; }
+  .why{ background: var(--paper-raised); border:1px solid var(--line); border-radius:10px; padding: 1.3rem; }
+  .why b{ font-family:'JetBrains Mono',monospace; display:block; margin-bottom:.4rem; }
+  .why b .n{ color: var(--teal); margin-right:.4rem; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+
+    <main class="content" style="padding:0;">
+      <section class="hero">
+        <div class="hero__inner">
+          <div>
+            <span class="eyebrow"><span class="str">open-source · practical · deep-dive</span></span>
+            <h1>Learn JavaScript the way it actually <span class="amber">runs</span>.</h1>
+            <p class="lede">A free, practical reference covering fundamentals through internals — closures, prototypes, the event loop, ESM, the modern ecosystem — with runnable code, real interview questions, and projects you build end to end.</p>
+            <div class="hero__cta">
+              <a class="btn primary" href="pages/fundamentals/variables-types.html">Start learning →</a>
+              <a class="btn ghost" href="interview-questions.html">Jump to interview prep</a>
+            </div>
+            <div class="stat-row">
+              <div class="stat"><b>13</b><span>in-depth lessons</span></div>
+              <div class="stat"><b>60+</b><span>interview Q&amp;A</span></div>
+              <div class="stat"><b>10+</b><span>solved coding challenges</span></div>
+              <div class="stat"><b>4</b><span>real projects</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="terminal">
+              <div class="terminal__bar"><span></span><span></span><span></span><b>console — try it live</b></div>
+              <div id="replLog">
+                <div class="output__line" style="color:#8b8f97">// type real JavaScript and press Run — this executes in your browser, live.</div>
+              </div>
+              <div class="terminal__input-row">
+                <span>&gt;</span>
+                <textarea id="replInput" placeholder="console.log([1,2,3].map(n => n * 2))"></textarea>
+                <button id="replRun" type="button">Run ⏎</button>
+              </div>
+              <div class="terminal__hint">This is a real JS console — closures, arrays, promises, whatever you throw at it.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <span class="eyebrow"><span class="str">why this reference exists</span></span>
+        <h2>MDN tells you the spec. This shows you the practice.</h2>
+        <p class="lede">Every lesson pairs the "what" with the "why does this matter when I'm shipping code" — and every claim comes with a runnable example, not just prose.</p>
+        <div class="why-grid">
+          <div class="why"><b><span class="n">01</span>Runnable everywhere</b>Every code sample is a real, styled code block — copy it, paste it in your own console, and watch the output match.</div>
+          <div class="why"><b><span class="n">02</span>Interview-first framing</b>Each core topic ends with the exact questions interviewers ask about it, answered the way a senior engineer would answer them.</div>
+          <div class="why"><b><span class="n">03</span>Specification-aware</b>We note what's spec'd behavior vs. engine quirk, and link back to the relevant MDN and ECMA-262 sections for the primary source.</div>
+          <div class="why"><b><span class="n">04</span>Ecosystem-honest</b>Covers ESM, CommonJS, bundlers, TypeScript, and where React/Vue/Angular/Svelte/Node actually fit — not just the language in isolation.</div>
+          <div class="why"><b><span class="n">05</span>Built to be forked</b>Plain HTML/CSS/JS, no build step. Clone <code>javascript.ai</code>, add a lesson file, open a PR.</div>
+          <div class="why"><b><span class="n">06</span>Projects, not just theory</b>Four guided builds — a todo app, a debounce/throttle lab, a custom Promise, a mini virtual DOM — each with full source.</div>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top:0;">
+        <span class="eyebrow"><span class="str">curriculum</span></span>
+        <h2>Where to start</h2>
+        <div class="grid" id="homeGrid"></div>
+      </section>
+
+      <footer class="site">
+        <p>javascript.ai — an open-source, community-maintained JavaScript reference. Content licensed MIT. Not affiliated with MDN or Mozilla — built to complement them.</p>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = './';</script>
+<script src="js/site-data.js"></script>
+<script src="js/include.js"></script>
+<script src="js/main.js"></script>
+<script src="js/repl.js"></script>
+<script>
+  const grid = document.getElementById('homeGrid');
+  if (grid) {
+    grid.innerHTML = window.SITE_SEARCH_INDEX.map(item => `
+      <a class="card" href="${item.href}">
+        <div class="card__file">${item.group}</div>
+        <div class="card__title">${item.title}</div>
+        <p class="card__desc">${item.desc}</p>
+      </a>`).join('');
+  }
+</script>
+</body>
+</html>

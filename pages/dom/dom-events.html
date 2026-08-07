@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOM & Events · javascript.ai</title>
+<meta name="description" content="Selecting and updating the DOM, event delegation, custom events, and performance.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Browser<span class="sep">/</span>DOM &amp; Events</p>
+<span class="eyebrow"><span class="str">browser/01</span></span>
+<h1>DOM & Events</h1>
+<p class="lede">The DOM is a live tree representation of the page that JavaScript can read and mutate. Events are how the browser tells your code that something happened. Together they're how JavaScript actually touches what the user sees.</p>
+
+<h2>Selecting elements</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">selecting.js</span><button class="code__copy">copy</button></div>
+  <pre><code>document.querySelector(".card");        // first match, any CSS selector — prefer this
+document.querySelectorAll(".card");     // ALL matches — a static NodeList, not an Array
+document.getElementById("app");         // fastest, ID-only lookup
+
+// querySelectorAll returns a NodeList — use forEach directly, or spread for map/filter
+document.querySelectorAll(".card").forEach(el => el.classList.add("visible"));
+[...document.querySelectorAll(".card")].map(el => el.textContent);</code></pre>
+</div>
+
+<h2>Reading and updating content</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">updating.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const el = document.querySelector("#title");
+
+el.textContent = "New title";       // ✅ safe — treats input as plain text, no HTML parsing
+el.innerHTML = "&lt;b&gt;New&lt;/b&gt;"; // ⚠️ parses as HTML — XSS risk with untrusted input
+
+el.classList.add("active");
+el.classList.remove("hidden");
+el.classList.toggle("open");
+el.classList.contains("active"); // true
+
+el.setAttribute("data-id", "42");
+el.dataset.id;                    // "42" — dataset reads data-* attributes directly
+
+el.style.color = "crimson";       // inline style — fine for one-offs, prefer CSS classes generally</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="callout__label">Never innerHTML with untrusted input</span>
+  <p>If content includes anything a user typed (a comment, a search query, a URL parameter), <code>innerHTML</code> can execute injected <code>&lt;script&gt;</code> tags — a classic XSS (cross-site scripting) vulnerability. Use <code>textContent</code>, or sanitize the HTML with a trusted library first.</p>
+</div>
+
+<h2>Creating and inserting elements</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">creating.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const li = document.createElement("li");
+li.textContent = "New item";
+li.className = "list-item";
+
+document.querySelector("ul").appendChild(li);   // add at the end
+document.querySelector("ul").prepend(li);        // add at the start
+li.remove();                                       // remove itself from the DOM
+
+// Building a big list? Batch it with a DocumentFragment to avoid layout thrash —
+// one reflow instead of one per appendChild.
+const frag = document.createDocumentFragment();
+items.forEach(text => {
+  const li = document.createElement("li");
+  li.textContent = text;
+  frag.appendChild(li);
+});
+document.querySelector("ul").appendChild(frag); // single DOM write</code></pre>
+</div>
+
+<h2>Events</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">events.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const button = document.querySelector("button");
+
+function handleClick(event) {
+  console.log(event.target);      // the exact element that was clicked
+  console.log(event.currentTarget); // the element the listener is attached to
+}
+
+button.addEventListener("click", handleClick);
+button.removeEventListener("click", handleClick); // must pass the SAME function reference
+
+// Preventing default browser behavior (e.g. a form submitting and reloading the page)
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  submitViaFetch();
+});</code></pre>
+</div>
+
+<h2>Event delegation</h2>
+<p>Instead of attaching a listener to every child element, attach one listener to a shared parent and check <code>event.target</code>. This works for elements added later too, and uses far less memory.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">delegation.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// ❌ Doesn't scale, and misses items added after the page loads
+document.querySelectorAll(".todo-item").forEach(item => {
+  item.addEventListener("click", handleTodoClick);
+});
+
+// ✅ One listener on the parent, works forever — even for future items
+document.querySelector(".todo-list").addEventListener("click", event => {
+  const item = event.target.closest(".todo-item"); // walk up to the nearest match
+  if (!item) return; // click landed on the list but not on an item
+  toggleComplete(item.dataset.id);
+});</code></pre>
+</div>
+
+<h2>Bubbling, capturing, and stopPropagation</h2>
+<p>Events travel in three phases: <strong>capture</strong> (root → target), <strong>target</strong>, and <strong>bubble</strong> (target → root). Listeners run during bubble by default.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">bubbling.js</span><button class="code__copy">copy</button></div>
+  <pre><code>outer.addEventListener("click", () => console.log("outer"));
+inner.addEventListener("click", () => console.log("inner"));
+// Clicking inner logs: "inner", then "outer" — the event bubbles up
+
+inner.addEventListener("click", event => {
+  event.stopPropagation(); // stops the bubble — "outer" never logs
+  console.log("inner only");
+});
+
+// Capture phase — runs BEFORE bubbling, top-down
+outer.addEventListener("click", () => console.log("capture: outer"), { capture: true });</code></pre>
+</div>
+
+<h2>Custom events</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">custom-events.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const cartUpdated = new CustomEvent("cart:updated", {
+  detail: { itemCount: 3 },
+  bubbles: true,
+});
+document.dispatchEvent(cartUpdated);
+
+document.addEventListener("cart:updated", event => {
+  console.log(event.detail.itemCount); // 3 — a decoupled way for modules to talk</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What is event delegation and why use it?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Attaching a single listener to a common ancestor instead of one listener per child, then identifying the actual target via <code>event.target</code> (usually with <code>.closest()</code>). It scales to any number of children, automatically covers elements added dynamically later, and uses less memory than hundreds of individual listeners.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between event.target and event.currentTarget?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>event.target</code> is the actual element the event originated on (e.g. the specific <code>&lt;li&gt;</code> clicked). <code>event.currentTarget</code> is the element the listener is attached to (e.g. the parent <code>&lt;ul&gt;</code>) — they're only the same element when there's no delegation involved.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Why is textContent generally safer than innerHTML?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>textContent</code> inserts a string as literal text — it's never parsed as HTML, so it can't execute a malicious <code>&lt;script&gt;</code> tag. <code>innerHTML</code> parses its input as markup, so inserting unsanitized user input opens the door to cross-site scripting (XSS) attacks.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/modules/modern-js-ecosystem.html"><span class="lbl">← Previous</span>Modern JS & The Ecosystem</a>
+  <a class="next" href="../../pages/practice/coding-challenges.html"><span class="lbl">Next</span>Coding Challenges →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

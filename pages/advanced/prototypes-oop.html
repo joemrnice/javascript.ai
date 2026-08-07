@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototypes & OOP · javascript.ai</title>
+<meta name="description" content="The prototype chain, classes, inheritance, mixins, and composition over inheritance.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Core mechanics<span class="sep">/</span>Prototypes &amp; OOP</p>
+<span class="eyebrow"><span class="str">core mechanics/02</span></span>
+<h1>Prototypes & OOP</h1>
+<p class="lede">Under every <code>class</code> in JavaScript is the same mechanism it's always had: objects linked to other objects. Understanding the prototype chain demystifies inheritance, and explains why <code>class</code> is "syntactic sugar" over something more flexible.</p>
+
+<h2>The prototype chain</h2>
+<p>Every object has an internal link — <code>[[Prototype]]</code>, exposed as <code>__proto__</code> or accessed via <code>Object.getPrototypeOf()</code> — to another object. Property lookup walks up this chain until it finds the property or hits <code>null</code>.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">prototype-chain.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const animal = {
+  eats: true,
+  walk() { return `${this.name} walks`; },
+};
+
+const rabbit = Object.create(animal); // rabbit's [[Prototype]] = animal
+rabbit.name = "Rabbit";
+rabbit.jumps = true;
+
+rabbit.walk();          // "Rabbit walks" — found on animal, `this` is still rabbit
+rabbit.eats;             // true — inherited, not own
+rabbit.hasOwnProperty("eats"); // false
+rabbit.hasOwnProperty("jumps"); // true
+
+// The chain: rabbit → animal → Object.prototype → null
+Object.getPrototypeOf(rabbit) === animal; // true</code></pre>
+</div>
+
+<h2>Constructor functions (the pre-ES6 way)</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">constructor-function.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function Animal(name) {
+  this.name = name;
+}
+// Shared methods live on the prototype — ONE copy shared by all instances,
+// not duplicated per object like methods defined inside the constructor.
+Animal.prototype.speak = function () {
+  return `${this.name} makes a sound.`;
+};
+
+function Dog(name) {
+  Animal.call(this, name); // "borrow" the parent constructor
+}
+Dog.prototype = Object.create(Animal.prototype); // link the prototype chain
+Dog.prototype.constructor = Dog;
+Dog.prototype.speak = function () {
+  return `${this.name} barks.`;
+};
+
+const rex = new Dog("Rex");
+rex.speak(); // "Rex barks."
+rex instanceof Dog;    // true
+rex instanceof Animal; // true — Dog.prototype's chain includes Animal.prototype</code></pre>
+</div>
+
+<h2>class syntax</h2>
+<p><code>class</code> (ES2015) is syntactic sugar over the exact mechanism above — same prototype chain, same performance characteristics, cleaner syntax.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">classes.js</span><button class="code__copy">copy</button></div>
+  <pre><code>class Animal {
+  #legs; // truly private field (ES2022) — inaccessible outside the class
+
+  constructor(name, legs = 4) {
+    this.name = name;
+    this.#legs = legs;
+  }
+  speak() { return `${this.name} makes a sound.`; }
+  get legCount() { return this.#legs; } // getter
+  static create(name) { return new Animal(name); } // static factory method
+}
+
+class Dog extends Animal {
+  speak() {
+    return `${super.speak()} Specifically, a bark.`; // call the parent method
+  }
+}
+
+const rex = new Dog("Rex");
+rex.speak();       // "Rex makes a sound. Specifically, a bark."
+rex.legCount;       // 4 — via the getter
+rex.#legs;          // SyntaxError — private fields aren't accessible outside the class</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="callout__label">class is not hoisted like function declarations</span>
+  <p>Classes are hoisted into the temporal dead zone, same as <code>let</code>/<code>const</code>. You cannot reference a class before its declaration line, unlike <code>function</code> declarations.</p>
+</div>
+
+<h2>Composition over inheritance</h2>
+<p>Deep inheritance chains get brittle fast. Mixins — functions that return a class extending their argument — let you compose behavior instead.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">mixins.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const Serializable = Base => class extends Base {
+  toJSON() { return JSON.stringify(this); }
+};
+const Comparable = Base => class extends Base {
+  equals(other) { return JSON.stringify(this) === JSON.stringify(other); }
+};
+
+class Point { constructor(x, y) { this.x = x; this.y = y; } }
+class SmartPoint extends Comparable(Serializable(Point)) {}
+
+const p = new SmartPoint(1, 2);
+p.toJSON();                     // '{"x":1,"y":2}'
+p.equals(new SmartPoint(1, 2)); // true</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Is JavaScript inheritance class-based or prototype-based?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Prototype-based. Even when using <code>class</code> syntax, objects inherit directly from other objects via the prototype chain — there's no separate "class" construct at runtime. <code>class</code> is sugar that makes this mechanism read more like classical OOP languages.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What does Object.create() do, and how is it different from new?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>Object.create(proto)</code> creates a brand-new object whose <code>[[Prototype]]</code> is set directly to <code>proto</code> — no constructor function runs. <code>new Fn()</code> creates an object linked to <code>Fn.prototype</code> <em>and</em> runs <code>Fn</code> as a constructor against it. <code>Object.create</code> is the more primitive operation.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Why put methods on the prototype instead of inside the constructor?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Methods defined inside the constructor (<code>this.speak = function(){}</code>) get recreated for every single instance, wasting memory. Methods on the prototype (or defined via <code>class</code>, which does this automatically) are created once and shared by reference across all instances.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/advanced/this-keyword.html"><span class="lbl">← Previous</span>The this Keyword</a>
+  <a class="next" href="../../pages/advanced/event-loop.html"><span class="lbl">Next</span>Execution Context & Event Loop →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

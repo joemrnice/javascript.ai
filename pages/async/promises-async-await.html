@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promises & async/await · javascript.ai</title>
+<meta name="description" content="From callback hell to Promises to async/await — with error handling and concurrency patterns.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Async<span class="sep">/</span>Promises &amp; async/await</p>
+<span class="eyebrow"><span class="str">async/01</span></span>
+<h1>Promises & async/await</h1>
+<p class="lede">Three eras of the same problem — "run this after that finishes" — from nested callbacks, to chainable promises, to code that reads top-to-bottom again. Understand what async/await is <em>doing</em> underneath, not just how to type it.</p>
+
+<h2>Callback hell (the problem)</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">callback-hell.js</span><button class="code__copy">copy</button></div>
+  <pre><code>getUser(userId, (err, user) => {
+  if (err) return handleError(err);
+  getOrders(user.id, (err, orders) => {
+    if (err) return handleError(err);
+    getOrderDetails(orders[0].id, (err, details) => {
+      if (err) return handleError(err);
+      render(details); // four levels deep, error handling repeated at every level
+    });
+  });
+});</code></pre>
+</div>
+
+<h2>Promises: a value that will exist eventually</h2>
+<p>A promise is an object representing the eventual result of an async operation. It's always in one of three states: <strong>pending</strong>, <strong>fulfilled</strong>, or <strong>rejected</strong> — and once settled, it never changes state again.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">promise-basics.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function fetchUser(id) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id > 0) resolve({ id, name: "Amara" });
+      else reject(new Error("Invalid id"));
+    }, 500);
+  });
+}
+
+fetchUser(1)
+  .then(user => user.name)         // each .then returns a NEW promise
+  .then(name => name.toUpperCase())
+  .then(name => console.log(name)) // "AMARA"
+  .catch(err => console.error(err.message)) // catches ANY rejection above
+  .finally(() => console.log("done — always runs"));</code></pre>
+</div>
+
+<h2>async/await: promises with synchronous-looking syntax</h2>
+<p><code>async/await</code> is not a new concurrency model — it's syntax sugar over promises. An <code>async</code> function always returns a promise; <code>await</code> pauses execution of <em>that function</em> (not the whole program) until the awaited promise settles.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">async-await.js</span><button class="code__copy">copy</button></div>
+  <pre><code>async function loadUserOrders(userId) {
+  try {
+    const user = await getUser(userId);       // pauses here, non-blocking to the rest of the app
+    const orders = await getOrders(user.id);   // then here
+    const details = await getOrderDetails(orders[0].id);
+    return details;
+  } catch (err) {
+    // try/catch replaces .catch() — one place for every await above to fail into
+    handleError(err);
+  }
+}
+
+// Equivalent promise chain, for comparison:
+function loadUserOrdersPromises(userId) {
+  return getUser(userId)
+    .then(user => getOrders(user.id))
+    .then(orders => getOrderDetails(orders[0].id))
+    .catch(handleError);
+}</code></pre>
+</div>
+
+<div class="callout warn">
+  <span class="callout__label">Sequential awaits are a common performance bug</span>
+  <p>Awaiting independent promises one at a time makes them run sequentially, not in parallel — even though they don't depend on each other.</p>
+</div>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">parallel-vs-sequential.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// ❌ Sequential — total time = sum of all three (slow)
+const user = await fetchUser();
+const posts = await fetchPosts();
+const comments = await fetchComments();
+
+// ✅ Parallel — total time = the SLOWEST of the three
+const [user2, posts2, comments2] = await Promise.all([
+  fetchUser(), fetchPosts(), fetchComments(),
+]);</code></pre>
+</div>
+
+<h2>The Promise combinators</h2>
+<table>
+  <thead><tr><th>Method</th><th>Resolves when</th><th>Rejects when</th></tr></thead>
+  <tbody>
+    <tr><td><code>Promise.all()</code></td><td>Every promise fulfills</td><td>Any one rejects (fails fast)</td></tr>
+    <tr><td><code>Promise.allSettled()</code></td><td>Every promise settles (fulfilled or rejected)</td><td>Never — gives you a status for each</td></tr>
+    <tr><td><code>Promise.race()</code></td><td>The first promise to settle, whatever it is</td><td>If the first to settle is a rejection</td></tr>
+    <tr><td><code>Promise.any()</code></td><td>The first promise to fulfill</td><td>Only if ALL of them reject</td></tr>
+  </tbody>
+</table>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">allsettled.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const results = await Promise.allSettled([
+  fetchUser(1), fetchUser(-1), fetchUser(2),
+]);
+// [
+//   { status: "fulfilled", value: {...} },
+//   { status: "rejected",  reason: Error("Invalid id") },
+//   { status: "fulfilled", value: {...} },
+// ]
+// Unlike Promise.all, one failure doesn't discard the others' results.</code></pre>
+</div>
+
+<h2>Common pitfalls</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">pitfalls.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// ❌ Forgetting to return inside a .then chain breaks the chain
+promise.then(result => {
+  doSomethingAsync(result); // not returned — the NEXT .then gets undefined immediately
+}).then(x => console.log(x)); // undefined, doesn't wait for doSomethingAsync
+
+// ❌ await outside a for...of loop still runs in a loop but forEach can't await
+[1, 2, 3].forEach(async n => { await doWork(n); }); // fires all 3 in parallel, uncontrolled,
+                                                       // and the outer function does NOT wait
+
+// ✅ Use for...of with await when you genuinely need sequential processing
+for (const n of [1, 2, 3]) { await doWork(n); }
+
+// ✅ Use Promise.all(arr.map(...)) when order doesn't matter and you want parallelism
+await Promise.all([1, 2, 3].map(n => doWork(n)));</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What are the three states of a Promise?<span class="chev">›</span></button>
+  <div class="qa__a"><p><strong>Pending</strong> (initial, neither fulfilled nor rejected), <strong>fulfilled</strong> (the operation completed successfully), and <strong>rejected</strong> (the operation failed). Once a promise moves to fulfilled or rejected — collectively called "settled" — it can never change state again.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Does await block the entire JavaScript thread?<span class="chev">›</span></button>
+  <div class="qa__a"><p>No. <code>await</code> only pauses execution within the current <code>async</code> function; control returns to the event loop, which keeps handling other code, UI events, and timers. When the awaited promise settles, the rest of the async function resumes as a microtask.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between Promise.all and Promise.allSettled?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>Promise.all</code> rejects immediately if any single promise rejects, discarding the results of the others. <code>Promise.allSettled</code> always resolves once every promise has settled, returning a status/value or status/reason object for each — useful when you want results even from operations that failed.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>How do you handle errors in async/await code?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Wrap the <code>await</code> calls in a standard <code>try/catch</code> block — a rejected awaited promise throws inside the async function, exactly like a synchronous exception. For multiple independent calls, consider whether one failure should stop everything (<code>try/catch</code> around <code>Promise.all</code>) or should be handled individually (<code>Promise.allSettled</code>).</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/advanced/event-loop.html"><span class="lbl">← Previous</span>Execution Context & Event Loop</a>
+  <a class="next" href="../../pages/modules/esm-vs-commonjs.html"><span class="lbl">Next</span>ESM vs CommonJS →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

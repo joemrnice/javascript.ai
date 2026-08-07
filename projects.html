@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects · javascript.ai</title>
+<meta name="description" content="Four practical, guided JavaScript projects with full source code.">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="./index.html">Home</a><span class="sep">/</span>Projects</p>
+<span class="eyebrow"><span class="str">build/01</span></span>
+<h1>Projects</h1>
+<p class="lede">Reading about JavaScript only gets you so far. These four builds turn the lessons into working software — two run live right here, two are full guided walkthroughs with complete source.</p>
+
+<h2>Project 1 — Todo App (live demo)</h2>
+<p>A complete, dependency-free todo app: adding, toggling, deleting, and filtering items. It exercises DOM creation, event delegation, and array methods from the <a href="./pages/dom/dom-events.html">DOM &amp; Events</a> and <a href="./pages/fundamentals/objects-arrays.html">Objects &amp; Arrays</a> lessons.</p>
+<div class="code" style="padding:0;">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">live demo — runs in a sandboxed iframe</span></div>
+  <iframe id="todoFrame" title="Todo app demo" style="width:100%; height:420px; border:0; background:#fff; display:block;" sandbox="allow-scripts"></iframe>
+</div>
+<p><strong>What it demonstrates:</strong> event delegation on the list container (one listener handles clicks on any item, including ones added after load), immutable-style state updates via <code>map</code>/<code>filter</code>, and re-rendering from state rather than hand-editing the DOM in place.</p>
+
+<h2>Project 2 — Debounce vs. Throttle Lab (live demo)</h2>
+<p>Fire events as fast as you can (button mashing or typing) and watch three counters update side by side: raw event count, debounced count, and throttled count. This makes the difference between <a href="./pages/practice/coding-challenges.html">debounce and throttle</a> visible instead of theoretical.</p>
+<div class="code" style="padding:0;">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">live demo — runs in a sandboxed iframe</span></div>
+  <iframe id="throttleFrame" title="Debounce vs throttle demo" style="width:100%; height:280px; border:0; background:#fff; display:block;" sandbox="allow-scripts"></iframe>
+</div>
+
+<h2>Project 3 — Build your own Promise (guided walkthrough)</h2>
+<p>Implementing a spec-compliant Promise from scratch is one of the best ways to actually understand the microtask queue, <code>.then</code> chaining, and state transitions. Here's a working (simplified but correct-behaving) implementation.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">MyPromise.js</span><button class="code__copy">copy</button></div>
+  <pre><code>class MyPromise {
+  static PENDING = "pending";
+  static FULFILLED = "fulfilled";
+  static REJECTED = "rejected";
+
+  #state = MyPromise.PENDING;
+  #value;
+  #callbacks = []; // queued {onFulfilled, onRejected} pairs, for handlers attached before settling
+
+  constructor(executor) {
+    const resolve = value => this.#settle(MyPromise.FULFILLED, value);
+    const reject = reason => this.#settle(MyPromise.REJECTED, reason);
+    try {
+      executor(resolve, reject);
+    } catch (err) {
+      reject(err);
+    }
+  }
+
+  #settle(state, value) {
+    if (this.#state !== MyPromise.PENDING) return; // a promise can only settle ONCE
+    this.#state = state;
+    this.#value = value;
+    queueMicrotask(() => this.#callbacks.forEach(cb => this.#run(cb)));
+  }
+
+  #run({ onFulfilled, onRejected, resolve, reject }) {
+    try {
+      if (this.#state === MyPromise.FULFILLED) {
+        resolve(onFulfilled ? onFulfilled(this.#value) : this.#value);
+      } else {
+        if (onRejected) resolve(onRejected(this.#value));
+        else reject(this.#value);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  }
+
+  then(onFulfilled, onRejected) {
+    return new MyPromise((resolve, reject) => {
+      const callback = { onFulfilled, onRejected, resolve, reject };
+      if (this.#state === MyPromise.PENDING) {
+        this.#callbacks.push(callback); // queue it — settle() will run it later
+      } else {
+        queueMicrotask(() => this.#run(callback)); // already settled — still async, per spec
+      }
+    });
+  }
+
+  catch(onRejected) { return this.then(null, onRejected); }
+}
+
+// Usage — behaves like a real Promise, including chaining and microtask timing
+new MyPromise((resolve) => setTimeout(() => resolve(42), 100))
+  .then(v => v * 2)
+  .then(v => console.log(v)); // 84</code></pre>
+</div>
+<div class="callout tip">
+  <span class="callout__label">The core insight</span>
+  <p>Every <code>.then()</code> call must itself return a <em>new</em> promise, so chains can keep going. And every callback — even on an already-settled promise — must run asynchronously (via <code>queueMicrotask</code>), which is why <code>.then()</code> callbacks never run before the rest of the current synchronous code, no matter how "instant" the promise already was.</p>
+</div>
+
+<h2>Project 4 — A minimal virtual DOM (guided walkthrough)</h2>
+<p>The idea behind React's rendering model, stripped to its essence: describe UI as plain JS objects, diff two versions, and patch only what changed.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">mini-vdom.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// 1. Describe UI as plain objects — a "virtual" element
+function h(tag, props = {}, ...children) {
+  return { tag, props, children };
+}
+
+// 2. Turn a virtual element into a REAL DOM node (only used for the first render)
+function createDOMNode(vnode) {
+  if (typeof vnode === "string") return document.createTextNode(vnode);
+  const el = document.createElement(vnode.tag);
+  for (const [key, value] of Object.entries(vnode.props)) {
+    if (key.startsWith("on")) el.addEventListener(key.slice(2).toLowerCase(), value);
+    else el.setAttribute(key, value);
+  }
+  vnode.children.forEach(child => el.appendChild(createDOMNode(child)));
+  return el;
+}
+
+// 3. Diff two virtual trees and patch only the real differences
+function patch(parent, newVNode, oldVNode, index = 0) {
+  const existing = parent.childNodes[index];
+
+  if (!oldVNode) { parent.appendChild(createDOMNode(newVNode)); return; }
+  if (!newVNode) { existing?.remove(); return; }
+  if (typeof newVNode !== typeof oldVNode || newVNode.tag !== oldVNode?.tag) {
+    parent.replaceChild(createDOMNode(newVNode), existing);
+    return;
+  }
+  if (typeof newVNode === "string") {
+    if (newVNode !== oldVNode) existing.textContent = newVNode;
+    return;
+  }
+  // Same tag — patch attributes, then recurse into children
+  const maxLen = Math.max(newVNode.children.length, oldVNode.children.length);
+  for (let i = 0; i < maxLen; i++) {
+    patch(existing, newVNode.children[i], oldVNode.children[i], i);
+  }
+}
+
+// Usage: describe state as a tree, re-render by diffing against the previous tree
+let oldTree = h("ul", {}, h("li", {}, "Item 1"));
+const root = document.getElementById("app");
+root.appendChild(createDOMNode(oldTree));
+
+function update() {
+  const newTree = h("ul", {}, h("li", {}, "Item 1"), h("li", {}, "Item 2 — added!"));
+  patch(root, newTree, oldTree);
+  oldTree = newTree; // the new tree becomes the baseline for next time
+}</code></pre>
+</div>
+<div class="callout warn">
+  <span class="callout__label">This is a teaching model, not a production one</span>
+  <p>Real virtual DOM implementations add key-based reconciliation (so re-ordered list items are moved, not recreated), batching, fiber-style interruptible rendering, and much more. The version above captures the core idea — diff, then patch — which is enough to make React's mental model click.</p>
+</div>
+
+<script>
+(function () {
+  const todoHTML = `<!DOCTYPE html><html><head><style>
+    body{font-family:ui-sans-serif,system-ui,sans-serif;margin:0;padding:1.2rem;background:#f7f8f5;color:#1b1d21;}
+    h3{margin:0 0 .8rem;font-family:'JetBrains Mono',monospace;font-size:.95rem;}
+    .row{display:flex;gap:.5rem;margin-bottom:1rem;}
+    input[type=text]{flex:1;padding:.5rem .6rem;border:1px solid #d7dad1;border-radius:6px;font-size:.9rem;}
+    button{background:#e8b23d;border:0;border-radius:6px;padding:.5rem .8rem;font-weight:600;cursor:pointer;font-size:.85rem;}
+    .filters{display:flex;gap:.4rem;margin-bottom:.8rem;}
+    .filters button{background:none;border:1px solid #d7dad1;color:#52565c;}
+    .filters button.active{background:#1b1d21;color:#fff;border-color:#1b1d21;}
+    ul{list-style:none;padding:0;margin:0;}
+    li{display:flex;align-items:center;gap:.6rem;padding:.5rem .3rem;border-bottom:1px solid #eceee8;font-size:.92rem;}
+    li.done span{text-decoration:line-through;color:#9599a0;}
+    li button{background:none;border:0;color:#e1573f;font-size:1.1rem;margin-left:auto;cursor:pointer;padding:0 .3rem;}
+    .empty{color:#9599a0;font-size:.85rem;padding:1rem 0;text-align:center;}
+  </style></head><body>
+    <h3>› todo.js</h3>
+    <div class="row"><input id="input" type="text" placeholder="What needs doing?"><button id="add">Add</button></div>
+    <div class="filters">
+      <button data-f="all" class="active">All</button>
+      <button data-f="active">Active</button>
+      <button data-f="done">Done</button>
+    </div>
+    <ul id="list"></ul>
+    <script>
+      let todos = [
+        { id: 1, text: "Read the closures lesson", done: true },
+        { id: 2, text: "Try the live console on the homepage", done: false },
+        { id: 3, text: "Build something with event delegation", done: false },
+      ];
+      let filter = "all";
+      const list = document.getElementById("list");
+      const input = document.getElementById("input");
+
+      function render() {
+        const visible = todos.filter(t => filter === "all" ? true : filter === "done" ? t.done : !t.done);
+        list.innerHTML = visible.length ? "" : '<div class="empty">Nothing here — add a task above.</div>';
+        visible.forEach(t => {
+          const li = document.createElement("li");
+          li.className = t.done ? "done" : "";
+          li.dataset.id = t.id;
+          li.innerHTML = '<input type="checkbox" ' + (t.done ? "checked" : "") + '><span></span><button aria-label="delete">\\u00d7</button>';
+          li.querySelector("span").textContent = t.text;
+          list.appendChild(li);
+        });
+      }
+
+      document.getElementById("add").addEventListener("click", addTodo);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") addTodo(); });
+      function addTodo() {
+        const text = input.value.trim();
+        if (!text) return;
+        todos = [...todos, { id: Date.now(), text, done: false }];
+        input.value = "";
+        render();
+      }
+
+      // Event delegation: ONE listener on the list handles every checkbox and delete button,
+      // including ones for todos added after the page loaded.
+      list.addEventListener("click", e => {
+        const li = e.target.closest("li");
+        if (!li) return;
+        const id = Number(li.dataset.id);
+        if (e.target.matches("button")) {
+          todos = todos.filter(t => t.id !== id);
+        } else if (e.target.matches("input")) {
+          todos = todos.map(t => t.id === id ? { ...t, done: !t.done } : t);
+        }
+        render();
+      });
+
+      document.querySelector(".filters").addEventListener("click", e => {
+        if (!e.target.matches("button")) return;
+        filter = e.target.dataset.f;
+        document.querySelectorAll(".filters button").forEach(b => b.classList.toggle("active", b === e.target));
+        render();
+      });
+
+      render();
+    <\/script>
+  </body></html>`;
+
+  const throttleHTML = `<!DOCTYPE html><html><head><style>
+    body{font-family:ui-sans-serif,system-ui,sans-serif;margin:0;padding:1.2rem;background:#f7f8f5;color:#1b1d21;}
+    h3{margin:0 0 .8rem;font-family:'JetBrains Mono',monospace;font-size:.95rem;}
+    button{background:#e8b23d;border:0;border-radius:6px;padding:.7rem 1.1rem;font-weight:700;cursor:pointer;font-size:.9rem;margin-bottom:1rem;}
+    .counters{display:flex;gap:1rem;}
+    .counter{flex:1;background:#fff;border:1px solid #d7dad1;border-radius:8px;padding:.9rem;text-align:center;}
+    .counter b{display:block;font-size:1.6rem;font-family:'JetBrains Mono',monospace;color:#2fa6a0;}
+    .counter span{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:#52565c;}
+  </style></head><body>
+    <h3>› throttle-lab.js — click as fast as you can</h3>
+    <button id="mash">Click me rapidly</button>
+    <div class="counters">
+      <div class="counter"><b id="rawCount">0</b><span>raw clicks</span></div>
+      <div class="counter"><b id="debCount">0</b><span>debounced (300ms)</span></div>
+      <div class="counter"><b id="thrCount">0</b><span>throttled (300ms)</span></div>
+    </div>
+    <script>
+      function debounce(fn, delay) {
+        let t;
+        return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); };
+      }
+      function throttle(fn, limit) {
+        let waiting = false;
+        return (...a) => {
+          if (waiting) return;
+          fn(...a);
+          waiting = true;
+          setTimeout(() => waiting = false, limit);
+        };
+      }
+      let raw = 0, deb = 0, thr = 0;
+      const rawEl = document.getElementById("rawCount");
+      const debEl = document.getElementById("debCount");
+      const thrEl = document.getElementById("thrCount");
+
+      const bumpDebounced = debounce(() => { debEl.textContent = ++deb; }, 300);
+      const bumpThrottled = throttle(() => { thrEl.textContent = ++thr; }, 300);
+
+      document.getElementById("mash").addEventListener("click", () => {
+        rawEl.textContent = ++raw;
+        bumpDebounced();
+        bumpThrottled();
+      });
+    <\/script>
+  </body></html>`;
+
+  const todoFrame = document.getElementById('todoFrame');
+  const throttleFrame = document.getElementById('throttleFrame');
+  if (todoFrame) todoFrame.srcdoc = todoHTML;
+  if (throttleFrame) throttleFrame.srcdoc = throttleHTML;
+})();
+</script>
+
+<div class="prevnext">
+  <a class="prev" href="./pages/practice/coding-challenges.html"><span class="lbl">← Previous</span>Coding Challenges</a>
+  <a class="next" href="./index.html"><span class="lbl">Back to</span>Home</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = './';</script>
+<script src="./js/site-data.js"></script>
+<script src="./js/include.js"></script>
+<script src="./js/main.js"></script>
+</body>
+</html>

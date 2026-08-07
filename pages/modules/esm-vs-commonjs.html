@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESM vs CommonJS · javascript.ai</title>
+<meta name="description" content="import/export, require/module.exports, dynamic import, interop, and bundlers.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Modules<span class="sep">/</span>ESM vs CommonJS</p>
+<span class="eyebrow"><span class="str">modules/01</span></span>
+<h1>ESM vs CommonJS</h1>
+<p class="lede">JavaScript has two module systems in production use today. Knowing which one you're in — and why they don't always play nicely together — solves a huge share of real-world "cannot use import statement" errors.</p>
+
+<h2>CommonJS (CJS) — Node's original system</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">math.cjs</span><button class="code__copy">copy</button></div>
+  <pre><code>// Exporting
+function add(a, b) { return a + b; }
+module.exports = { add };
+// or: exports.add = add;
+
+// Importing — synchronous, resolved at require() call time
+const { add } = require("./math.cjs");
+add(2, 3);</code></pre>
+</div>
+<p>CJS <code>require()</code> is synchronous and can be called <strong>conditionally, anywhere</strong> in a file — inside an <code>if</code>, inside a function. Modules are cached after the first load — every subsequent <code>require()</code> of the same file returns the same object.</p>
+
+<h2>ESM (ECMAScript Modules) — the language standard</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">math.mjs</span><button class="code__copy">copy</button></div>
+  <pre><code>// Named exports
+export function add(a, b) { return a + b; }
+export const PI = 3.14159;
+
+// Default export — one per module
+export default function multiply(a, b) { return a * b; }
+
+// Importing
+import multiply, { add, PI } from "./math.mjs";
+import * as math from "./math.mjs"; // namespace import — math.add, math.PI
+
+// Dynamic import — the ESM escape hatch for conditional/lazy loading
+const { add: lazyAdd } = await import("./math.mjs");</code></pre>
+</div>
+
+<h2>Key differences</h2>
+<table>
+  <thead><tr><th></th><th>CommonJS</th><th>ESM</th></tr></thead>
+  <tbody>
+    <tr><td>Syntax</td><td><code>require()</code> / <code>module.exports</code></td><td><code>import</code> / <code>export</code></td></tr>
+    <tr><td>Loading</td><td>Synchronous</td><td>Asynchronous (can be parsed and fetched in parallel)</td></tr>
+    <tr><td>Timing</td><td>Runtime — resolved when the line executes</td><td>Static — bindings resolved at parse time, before execution</td></tr>
+    <tr><td>Where allowed</td><td>Anywhere, conditionally</td><td>Top-level only (except dynamic <code>import()</code>)</td></tr>
+    <tr><td>this at module top level</td><td><code>module.exports</code></td><td><code>undefined</code></td></tr>
+    <tr><td>File extension (Node)</td><td><code>.cjs</code>, or <code>.js</code> with <code>"type": "commonjs"</code></td><td><code>.mjs</code>, or <code>.js</code> with <code>"type": "module"</code></td></tr>
+    <tr><td>Browser support</td><td>None natively — needs a bundler</td><td>Native via <code>&lt;script type="module"&gt;</code></td></tr>
+    <tr><td>Tree-shaking</td><td>Hard — exports are dynamic</td><td>Easy — static structure lets bundlers remove unused exports</td></tr>
+  </tbody>
+</table>
+
+<div class="callout tip">
+  <span class="callout__label">Why ESM enables tree-shaking</span>
+  <p>Because ESM <code>import</code>/<code>export</code> statements are static (fixed, analyzable without running the code), a bundler can build a complete dependency graph and delete exports nobody imports. CommonJS's <code>require()</code> can happen inside conditionals with dynamic paths, so bundlers generally can't prove a given export is unused.</p>
+</div>
+
+<h2>Using ESM in the browser</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">index.html</span><button class="code__copy">copy</button></div>
+  <pre><code>&lt;script type="module"&gt;
+  import { add } from "./math.mjs";
+  console.log(add(2, 3));
+&lt;/script&gt;
+
+&lt;!-- Modules are automatically deferred and strict-mode by default,
+     and each module only executes once, no matter how many times it's imported. --&gt;</code></pre>
+</div>
+
+<h2>Interop: using both together</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">interop.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// ESM importing a CommonJS package — usually fine, Node wraps it automatically
+import express from "express"; // express ships as CJS; this "just works" in Node ESM
+
+// CommonJS CANNOT statically `require()` an ESM-only package — must use
+// dynamic import instead, because require() is synchronous and ESM loading isn't:
+async function loadEsmOnlyPkg() {
+  const { default: chalk } = await import("chalk"); // chalk v5+ is ESM-only
+  return chalk;
+}</code></pre>
+</div>
+
+<h2>Why bundlers still exist in an ESM world</h2>
+<p>Native ESM works in every modern browser, so in theory you don't need a bundler at all for module resolution. In practice, tools like Vite, esbuild, Webpack, and Rollup still earn their keep for: bundling hundreds of small files into fewer requests, transpiling TypeScript/JSX, minification, code-splitting for lazy-loaded routes, and handling non-JS assets (CSS, images) through <code>import</code>.</p>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What is the single biggest practical difference between require() and import?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>require()</code> is synchronous and can be called conditionally anywhere in a file, since CommonJS resolves at runtime. <code>import</code> is static — bindings are resolved before any code runs, and (outside of dynamic <code>import()</code>) it can only appear at the top level of a module, never inside an <code>if</code> or function.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>How do you conditionally or lazily load a module in ESM?<span class="chev">›</span></button>
+  <div class="qa__a"><p>With dynamic <code>import()</code>, which returns a promise: <code>const mod = await import("./feature.js")</code>. This is the standard way to code-split a route or defer loading a heavy dependency until it's actually needed.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Why might "Cannot use import statement outside a module" appear?<span class="chev">›</span></button>
+  <div class="qa__a"><p>The runtime is treating the file as CommonJS by default. Fix it by renaming the file to <code>.mjs</code>, adding <code>"type": "module"</code> to <code>package.json</code> (Node), or adding <code>type="module"</code> to the <code>&lt;script&gt;</code> tag (browser).</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/async/promises-async-await.html"><span class="lbl">← Previous</span>Promises & async/await</a>
+  <a class="next" href="../../pages/modules/modern-js-ecosystem.html"><span class="lbl">Next</span>Modern JS & The Ecosystem →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

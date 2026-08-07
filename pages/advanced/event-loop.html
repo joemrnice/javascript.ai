@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Execution Context & Event Loop · javascript.ai</title>
+<meta name="description" content="The call stack, Web APIs, the task queue, microtasks vs macrotasks, and rendering.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Core mechanics<span class="sep">/</span>Event Loop</p>
+<span class="eyebrow"><span class="str">core mechanics/03</span></span>
+<h1>Execution Context & Event Loop</h1>
+<p class="lede">JavaScript is single-threaded — one call stack, one thing at a time. Everything asynchronous (timers, network requests, DOM events) is handled by APIs <em>outside</em> the engine, coordinated by the event loop. This is the single most-asked systems question in JS interviews.</p>
+
+<h2>The building blocks</h2>
+<table>
+  <thead><tr><th>Piece</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>Call stack</td><td>Tracks function calls, one frame per active call. LIFO — last in, first out.</td></tr>
+    <tr><td>Heap</td><td>Where objects are allocated in memory.</td></tr>
+    <tr><td>Web APIs / Node APIs</td><td>Provided by the browser/runtime, not the JS engine: <code>setTimeout</code>, <code>fetch</code>, DOM events, file I/O.</td></tr>
+    <tr><td>Microtask queue</td><td>Promise callbacks (<code>.then</code>, <code>async/await</code> continuations), <code>queueMicrotask</code>. <strong>Higher priority.</strong></td></tr>
+    <tr><td>Macrotask (task) queue</td><td><code>setTimeout</code>, <code>setInterval</code>, I/O, UI events. Lower priority.</td></tr>
+    <tr><td>Event loop</td><td>Continuously checks: is the call stack empty? If so, drain the entire microtask queue, then run one macrotask, then repeat.</td></tr>
+  </tbody>
+</table>
+
+<h2>The rule that decides most "predict the output" questions</h2>
+<div class="callout tip">
+  <span class="callout__label">Priority order</span>
+  <p>1. Run all synchronous code on the call stack to completion.<br>2. Drain the <strong>entire</strong> microtask queue (all pending promises), even if new microtasks keep getting added.<br>3. Run exactly <strong>one</strong> macrotask.<br>4. Go back to step 2.</p>
+</div>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">predict-the-output.js</span><button class="code__copy">copy</button></div>
+  <pre><code>console.log("1: sync start");
+
+setTimeout(() => console.log("2: macrotask (setTimeout)"), 0);
+
+Promise.resolve().then(() => console.log("3: microtask (promise)"));
+
+console.log("4: sync end");
+
+// Output order:
+// 1: sync start
+// 4: sync end
+// 3: microtask (promise)      ← microtasks always drain before the next macrotask
+// 2: macrotask (setTimeout)   ← even with a 0ms delay</code></pre>
+</div>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">nested-microtasks.js</span><button class="code__copy">copy</button></div>
+  <pre><code>console.log("A");
+
+setTimeout(() => console.log("B"), 0);
+
+Promise.resolve()
+  .then(() => {
+    console.log("C");
+    return Promise.resolve();
+  })
+  .then(() => console.log("D"));
+
+Promise.resolve().then(() => console.log("E"));
+
+console.log("F");
+
+// A, F, C, E, D, B
+// The microtask queue keeps draining — C's chained .then (D) still
+// runs before the setTimeout callback (B), because the queue isn't
+// considered "empty" until every microtask, including newly-queued
+// ones, has run.</code></pre>
+</div>
+
+<h2>The call stack and stack overflow</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">call-stack.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function third()  { console.trace(); }     // stack: [main, first, second, third]
+function second() { third(); }             // stack: [main, first, second]
+function first()  { second(); }            // stack: [main, first]
+first();                                     // stack: [main]
+
+// A function with no base case blows the stack:
+function recurse() { return recurse(); }
+recurse(); // RangeError: Maximum call stack size exceeded</code></pre>
+</div>
+
+<h2>Why this matters for the UI thread</h2>
+<p>Because there's one thread, a long synchronous task — like sorting a huge array — blocks <strong>everything</strong>: clicks, renders, scroll, timers. This is why expensive work gets chunked (via <code>setTimeout</code>/<code>requestIdleCallback</code>) or moved to a <strong>Web Worker</strong>, which runs on a genuinely separate thread with no shared memory (communication happens via <code>postMessage</code>).</p>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Is JavaScript single-threaded? Then how does async code work?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Yes, the JS engine itself runs on one thread with one call stack. Asynchronous behavior comes from the surrounding runtime (browser or Node), which offloads work like timers and network requests to separate mechanisms, then schedules the corresponding callbacks back onto the JS thread via the event loop once the main stack is clear.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between the microtask queue and the macrotask queue?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Microtasks (promise callbacks, <code>queueMicrotask</code>) are drained completely, in full, before the event loop is allowed to process even a single macrotask (<code>setTimeout</code>, UI events, I/O). This means promise-based code always "wins" a race against a <code>setTimeout(0)</code>.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Does setTimeout(fn, 0) run immediately?<span class="chev">›</span></button>
+  <div class="qa__a"><p>No. <code>0ms</code> is a minimum delay, not a guarantee — the callback still has to wait for the current synchronous code to finish, the entire microtask queue to drain, and (in browsers) is often clamped to a ~4ms minimum after several nested timeouts. It always runs after any already-queued microtasks.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What is a Web Worker and when would you use one?<span class="chev">›</span></button>
+  <div class="qa__a"><p>A Web Worker runs JavaScript on a separate OS thread, isolated from the main thread's memory — communication happens only via serialized messages (<code>postMessage</code>/<code>onmessage</code>). Use it for CPU-heavy work (image processing, large sorts/parses, complex calculations) that would otherwise freeze the UI, since it has no access to the DOM directly.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/advanced/prototypes-oop.html"><span class="lbl">← Previous</span>Prototypes & OOP</a>
+  <a class="next" href="../../pages/async/promises-async-await.html"><span class="lbl">Next</span>Promises & async/await →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

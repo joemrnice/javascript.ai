@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coding Challenges · javascript.ai</title>
+<meta name="description" content="debounce, throttle, curry, deep clone, EventEmitter, Promise.all — implemented and explained.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Interview Prep<span class="sep">/</span>Coding Challenges</p>
+<span class="eyebrow"><span class="str">interview prep/02</span></span>
+<h1>Coding Challenges</h1>
+<p class="lede">The implementation questions that show up over and over in JavaScript interviews — not because the answers are exotic, but because writing them correctly requires understanding closures, the event loop, and the prototype chain all at once. Each one is explained, not just pasted.</p>
+
+<h2>1. Debounce</h2>
+<p>Delays invoking a function until a pause of silence has passed. Used for search-as-you-type, resize handlers, autosave.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">debounce.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function debounce(fn, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId); // cancel the previous pending call
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+const search = debounce(query => console.log("searching:", query), 300);
+search("j"); search("ja"); search("jav"); // only the LAST call fires, 300ms after typing stops</code></pre>
+</div>
+
+<h2>2. Throttle</h2>
+<p>Guarantees a function runs at most once per fixed time window. Used for scroll handlers, drag events, rate-limited API calls.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">throttle.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function throttle(fn, limit) {
+  let waiting = false;
+  return function (...args) {
+    if (waiting) return;
+    fn.apply(this, args);
+    waiting = true;
+    setTimeout(() => { waiting = false; }, limit);
+  };
+}
+
+const onScroll = throttle(() => console.log("scroll position:", window.scrollY), 200);
+window.addEventListener("scroll", onScroll); // fires at most once every 200ms</code></pre>
+</div>
+
+<h2>3. Deep clone (without structuredClone)</h2>
+<p>Interviewers often want to see you handle nested objects/arrays and circular references — the reasons a real library exists for this.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">deep-clone.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function deepClone(value, seen = new WeakMap()) {
+  if (value === null || typeof value !== "object") return value; // primitives are already "cloned"
+  if (seen.has(value)) return seen.get(value);                    // handle circular references
+
+  const clone = Array.isArray(value) ? [] : {};
+  seen.set(value, clone);
+
+  for (const key of Object.keys(value)) {
+    clone[key] = deepClone(value[key], seen);
+  }
+  return clone;
+}
+
+const original = { a: 1, nested: { b: 2 } };
+original.self = original; // circular reference
+const copy = deepClone(original);
+copy.nested.b = 99;
+console.log(original.nested.b); // 2 — untouched, truly independent</code></pre>
+</div>
+
+<h2>4. A custom EventEmitter</h2>
+<p>Node's <code>EventEmitter</code> pattern, from scratch — the pub/sub backbone behind countless libraries.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">event-emitter.js</span><button class="code__copy">copy</button></div>
+  <pre><code>class EventEmitter {
+  #listeners = new Map(); // event name -> Set of callbacks
+
+  on(event, callback) {
+    if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
+    this.#listeners.get(event).add(callback);
+    return () => this.off(event, callback); // return an unsubscribe function
+  }
+
+  off(event, callback) {
+    this.#listeners.get(event)?.delete(callback);
+  }
+
+  emit(event, ...args) {
+    this.#listeners.get(event)?.forEach(cb => cb(...args));
+  }
+
+  once(event, callback) {
+    const wrapper = (...args) => { callback(...args); this.off(event, wrapper); };
+    this.on(event, wrapper);
+  }
+}
+
+const bus = new EventEmitter();
+const unsubscribe = bus.on("message", text => console.log("got:", text));
+bus.emit("message", "hello"); // "got: hello"
+unsubscribe();
+bus.emit("message", "ignored"); // nothing logs</code></pre>
+</div>
+
+<h2>5. Implement your own Promise.all</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">promise-all.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function promiseAll(promises) {
+  return new Promise((resolve, reject) => {
+    const results = new Array(promises.length);
+    let remaining = promises.length;
+    if (remaining === 0) return resolve(results);
+
+    promises.forEach((p, index) => {
+      Promise.resolve(p).then(value => {
+        results[index] = value;       // preserve original ORDER, not completion order
+        if (--remaining === 0) resolve(results);
+      }, reject);                       // any single rejection rejects the whole thing
+    });
+  });
+}</code></pre>
+</div>
+
+<h2>6. Curry a function</h2>
+<p>Transforms <code>fn(a, b, c)</code> into a chain of single-argument calls: <code>fn(a)(b)(c)</code>, calling the original once enough arguments have accumulated.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">curry.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function curry(fn) {
+  return function curried(...args) {
+    if (args.length >= fn.length) return fn.apply(this, args);
+    return (...more) => curried.apply(this, [...args, ...more]);
+  };
+}
+
+const add3 = (a, b, c) => a + b + c;
+const curried = curry(add3);
+
+curried(1)(2)(3); // 6
+curried(1, 2)(3);  // 6
+curried(1, 2, 3);  // 6 — all call shapes work</code></pre>
+</div>
+
+<h2>7. Flatten a nested array (without Array.flat)</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">flatten.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function flatten(arr, depth = Infinity) {
+  if (depth < 1) return arr.slice();
+  return arr.reduce(
+    (flat, item) => flat.concat(Array.isArray(item) ? flatten(item, depth - 1) : item),
+    []
+  );
+}
+
+flatten([1, [2, [3, [4, 5]]], 6]);    // [1, 2, 3, 4, 5, 6]
+flatten([1, [2, [3, [4]]]], 1);        // [1, 2, [3, [4]]] — respects the depth limit</code></pre>
+</div>
+
+<h2>8. Implement your own bind()</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">my-bind.js</span><button class="code__copy">copy</button></div>
+  <pre><code>Function.prototype.myBind = function (thisArg, ...boundArgs) {
+  const originalFn = this; // the function myBind was called on
+  return function (...callArgs) {
+    return originalFn.apply(thisArg, [...boundArgs, ...callArgs]);
+  };
+};
+
+function introduce(greeting, punctuation) { return `${greeting}, I'm ${this.name}${punctuation}`; }
+const bound = introduce.myBind({ name: "Zara" }, "Hi");
+bound("!"); // "Hi, I'm Zara!"</code></pre>
+</div>
+
+<h2>9. Deep equality check</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">deep-equal.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function deepEqual(a, b) {
+  if (Object.is(a, b)) return true;                                   // handles primitives, NaN, -0/0
+  if (typeof a !== "object" || typeof b !== "object" || !a || !b) return false;
+
+  const keysA = Object.keys(a), keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+
+  return keysA.every(key => Object.hasOwn(b, key) && deepEqual(a[key], b[key]));
+}
+
+deepEqual({ a: 1, b: { c: 2 } }, { a: 1, b: { c: 2 } }); // true
+deepEqual({ a: 1 }, { a: 1, b: 2 });                       // false</code></pre>
+</div>
+
+<h2>10. Chunk an array</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">chunk.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function chunk(arr, size) {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+}
+
+chunk([1, 2, 3, 4, 5, 6, 7], 3); // [[1,2,3], [4,5,6], [7]]</code></pre>
+</div>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/dom/dom-events.html"><span class="lbl">← Previous</span>DOM & Events</a>
+  <a class="next" href="../../projects.html"><span class="lbl">Next</span>Projects →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Objects & Arrays · javascript.ai</title>
+<meta name="description" content="The object model, destructuring, spread/rest, and the array methods that matter most.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Fundamentals<span class="sep">/</span>Objects &amp; Arrays</p>
+<span class="eyebrow"><span class="str">fundamentals/03</span></span>
+<h1>Objects & Arrays</h1>
+<p class="lede">Objects are JavaScript's one true composite structure — arrays, functions, dates, even classes are objects underneath. Get comfortable with the object model and the rest of the language gets easier.</p>
+
+<h2>Object literals and property access</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">objects.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const user = {
+  name: "Amara",
+  age: 28,
+  ["computed_" + "key"]: true, // computed property names
+  greet() { return `Hi, I'm ${this.name}`; }, // method shorthand
+};
+
+user.name;          // dot notation — "Amara"
+user["age"];        // bracket notation — required for dynamic keys
+const key = "name";
+user[key];           // "Amara" — dynamic access
+
+user.address?.city; // optional chaining — undefined instead of a throw
+user.address ??= {}; // nullish assignment — sets a default only if null/undefined</code></pre>
+</div>
+
+<h2>Destructuring</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">destructuring.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const person = { name: "Kwame", location: { city: "Accra", country: "Ghana" } };
+
+// Object destructuring, with renaming, defaults, and nesting
+const {
+  name,
+  role = "guest",
+  location: { city },
+} = person;
+
+// Array destructuring — position-based, works with any iterable
+const [first, second, ...rest] = [10, 20, 30, 40];
+// first = 10, second = 20, rest = [30, 40]
+
+// Swapping values with no temp variable
+let a = 1, b = 2;
+[a, b] = [b, a];
+
+// Destructuring in function parameters — extremely common in React-style code
+function render({ title, size = "md" }) {
+  return `${title} (${size})`;
+}</code></pre>
+</div>
+
+<h2>Spread and rest</h2>
+<p>The same <code>...</code> syntax means two different things depending on position: <strong>spread</strong> expands an iterable, <strong>rest</strong> collects remaining items.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">spread-rest.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// Spread — copying and merging (shallow!)
+const base = { theme: "dark", size: "md" };
+const merged = { ...base, size: "lg" }; // { theme: "dark", size: "lg" }
+
+const arr1 = [1, 2];
+const arr2 = [3, 4];
+const combined = [...arr1, ...arr2]; // [1, 2, 3, 4]
+
+// Rest — the inverse, collecting into an array
+function sum(...nums) { return nums.reduce((a, b) => a + b, 0); }
+const [head, ...tail] = [1, 2, 3]; // head = 1, tail = [2, 3]</code></pre>
+</div>
+<div class="callout warn">
+  <span class="callout__label">Shallow, not deep</span>
+  <p>Spread only copies one level deep. <code>{ ...base, nested: base.nested }</code> still shares the same <code>nested</code> object by reference. For a true deep copy use <code>structuredClone(obj)</code> (built into modern browsers and Node 17+), not <code>JSON.parse(JSON.stringify(obj))</code>, which silently drops functions, <code>undefined</code>, and <code>Date</code> objects.</p>
+</div>
+
+<h2>The array methods that matter</h2>
+<table>
+  <thead><tr><th>Method</th><th>Mutates?</th><th>Use it for</th></tr></thead>
+  <tbody>
+    <tr><td><code>map()</code></td><td>No</td><td>Transform every item, same length out</td></tr>
+    <tr><td><code>filter()</code></td><td>No</td><td>Keep items matching a condition</td></tr>
+    <tr><td><code>reduce()</code></td><td>No</td><td>Fold an array into a single value (sum, object, grouped map)</td></tr>
+    <tr><td><code>find()</code> / <code>findIndex()</code></td><td>No</td><td>First match / its index</td></tr>
+    <tr><td><code>some()</code> / <code>every()</code></td><td>No</td><td>Boolean checks across the array</td></tr>
+    <tr><td><code>flatMap()</code></td><td>No</td><td>Map then flatten one level — great for 1-to-many transforms</td></tr>
+    <tr><td><code>sort()</code></td><td><strong>Yes</strong></td><td>In-place sort — always pass a comparator for numbers</td></tr>
+    <tr><td><code>splice()</code></td><td><strong>Yes</strong></td><td>Insert/remove in place</td></tr>
+    <tr><td><code>slice()</code></td><td>No</td><td>Copy a portion — the non-mutating sibling of splice</td></tr>
+  </tbody>
+</table>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">reduce-patterns.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const orders = [
+  { id: 1, category: "books", total: 20 },
+  { id: 2, category: "tech",  total: 500 },
+  { id: 3, category: "books", total: 15 },
+];
+
+// Sum
+const grandTotal = orders.reduce((acc, o) => acc + o.total, 0); // 535
+
+// Group by — reduce can build any shape, not just numbers
+const byCategory = orders.reduce((acc, o) => {
+  (acc[o.category] ??= []).push(o);
+  return acc;
+}, {});
+// { books: [order1, order3], tech: [order2] }
+
+// A frequent interview gotcha:
+[10, 1, 2].sort();          // [1, 10, 2] — sorts as STRINGS by default!
+[10, 1, 2].sort((a, b) => a - b); // [1, 2, 10] — always pass a comparator for numbers</code></pre>
+</div>
+
+<h2>Object utility methods worth knowing</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">object-utils.js</span><button class="code__copy">copy</button></div>
+  <pre><code>Object.keys(obj);     // ["name", "age"] — own enumerable keys
+Object.values(obj);   // ["Amara", 28]
+Object.entries(obj);  // [["name","Amara"], ["age",28]] — great for for...of
+Object.fromEntries([["a", 1], ["b", 2]]); // { a: 1, b: 2 } — the inverse
+
+Object.freeze(obj);   // shallow-freezes — top-level reassignment throws (in strict mode)
+Object.isFrozen(obj); // true
+
+Object.assign({}, obj1, obj2); // shallow merge — spread syntax is now preferred</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>How do you deep clone an object in modern JavaScript?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Use <code>structuredClone(obj)</code>, available natively in modern browsers and Node 17+. It handles nested objects, arrays, dates, maps, and sets correctly. Avoid <code>JSON.parse(JSON.stringify(obj))</code> — it silently loses functions, <code>undefined</code> values, <code>Date</code> becomes a string, and it throws on circular references.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between map() and forEach()?<span class="chev">›</span></button>
+  <div class="qa__a"><p><code>map()</code> returns a new array built from the callback's return values, and is meant for transformations. <code>forEach()</code> always returns <code>undefined</code> and is meant purely for side effects (like logging). Using <code>forEach</code> when you meant <code>map</code> — or building an array by pushing inside a <code>forEach</code> — is a common code-review flag.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>How would you remove duplicate values from an array?<span class="chev">›</span></button>
+  <div class="qa__a"><p>The idiomatic one-liner is <code>[...new Set(array)]</code> — <code>Set</code> only stores unique values, and the spread converts it back into an array. For arrays of objects, dedupe by a key using a <code>Map</code>: <code>[...new Map(arr.map(o => [o.id, o])).values()]</code>.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/fundamentals/functions-closures.html"><span class="lbl">← Previous</span>Functions, Scope & Closures</a>
+  <a class="next" href="../../pages/advanced/this-keyword.html"><span class="lbl">Next</span>The this Keyword →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

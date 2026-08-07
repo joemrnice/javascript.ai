@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern JS & The Ecosystem · javascript.ai</title>
+<meta name="description" content="ES2015 through ES2024 features, TypeScript, frameworks, runtimes, and tooling.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Modules<span class="sep">/</span>Modern JS &amp; Ecosystem</p>
+<span class="eyebrow"><span class="str">modules/02</span></span>
+<h1>Modern JS & The Ecosystem</h1>
+<p class="lede">JavaScript ships new features every year via TC39, and the tooling around it moves just as fast. Here's the practical map: what changed release by release, and where TypeScript, frameworks, runtimes, and build tools actually fit.</p>
+
+<h2>ECMAScript, year by year (the highlights)</h2>
+<table>
+  <thead><tr><th>Year</th><th>Edition</th><th>Headline features</th></tr></thead>
+  <tbody>
+    <tr><td>2015</td><td>ES6 / ES2015</td><td><code>let</code>/<code>const</code>, arrow functions, classes, template literals, destructuring, modules, promises, default/rest params, <code>Map</code>/<code>Set</code></td></tr>
+    <tr><td>2016</td><td>ES2016</td><td><code>Array.prototype.includes()</code>, exponent operator <code>**</code></td></tr>
+    <tr><td>2017</td><td>ES2017</td><td><code>async/await</code>, <code>Object.entries()</code>/<code>values()</code>, string padding</td></tr>
+    <tr><td>2018</td><td>ES2018</td><td>Object spread/rest (<code>{...obj}</code>), async iteration (<code>for await...of</code>), <code>Promise.finally()</code></td></tr>
+    <tr><td>2019</td><td>ES2019</td><td><code>Array.flat()</code>/<code>flatMap()</code>, <code>Object.fromEntries()</code>, optional <code>catch</code> binding</td></tr>
+    <tr><td>2020</td><td>ES2020</td><td>Optional chaining <code>?.</code>, nullish coalescing <code>??</code>, <code>BigInt</code>, <code>Promise.allSettled()</code>, dynamic <code>import()</code></td></tr>
+    <tr><td>2021</td><td>ES2021</td><td>Logical assignment (<code>&amp;&amp;=</code> <code>||=</code> <code>??=</code>), <code>String.replaceAll()</code>, <code>Promise.any()</code></td></tr>
+    <tr><td>2022</td><td>ES2022</td><td>Class private fields (<code>#field</code>), top-level <code>await</code>, <code>Array.at()</code>, <code>structuredClone()</code></td></tr>
+    <tr><td>2023</td><td>ES2023</td><td>Array copying methods: <code>toSorted()</code>, <code>toReversed()</code>, <code>toSpliced()</code>, <code>with()</code> — non-mutating siblings of the old methods</td></tr>
+    <tr><td>2024</td><td>ES2024</td><td><code>Object.groupBy()</code>/<code>Map.groupBy()</code>, <code>Promise.withResolvers()</code>, well-formed Unicode strings</td></tr>
+  </tbody>
+</table>
+
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">recent-additions.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// Non-mutating array methods (ES2023) — no more defensive [...arr].sort()
+const original = [3, 1, 2];
+const sorted = original.toSorted();      // [1, 2, 3] — original untouched
+const reversed = original.toReversed();  // [2, 1, 3]
+original.at(-1);                          // 2 — negative indexing, finally
+
+// Object.groupBy (ES2024)
+const inventory = [{ type: "fruit", name: "apple" }, { type: "veg", name: "carrot" }];
+Object.groupBy(inventory, item => item.type);
+// { fruit: [{...}], veg: [{...}] }</code></pre>
+</div>
+
+<h2>TypeScript: what it actually adds</h2>
+<p>TypeScript is a superset of JavaScript that adds a static type system, compiled (or stripped) away before it runs. It catches a whole class of bugs — wrong argument types, typos in property names, null/undefined mistakes — before code ever executes.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">types.ts</span><button class="code__copy">copy</button></div>
+  <pre><code>interface User {
+  id: number;
+  name: string;
+  role?: "admin" | "member"; // optional, and constrained to a union of literals
+}
+
+function greet(user: User): string {
+  return `Hi, ${user.name}`;
+}
+
+greet({ id: 1, name: "Ama" });        // ✅ compiles
+greet({ id: "1", name: "Ama" });      // ❌ compile-time error: id must be a number
+
+// Generics — reusable, type-safe across many types
+function firstItem<T>(arr: T[]): T | undefined { return arr[0]; }
+firstItem<number>([1, 2, 3]); // number | undefined</code></pre>
+</div>
+<div class="callout tip">
+  <span class="callout__label">Important nuance</span>
+  <p>TypeScript's types are erased entirely at compile time — they have zero effect on runtime behavior or performance. It doesn't replace JavaScript; it compiles down to plain JavaScript that runs exactly the same as if you'd written it by hand.</p>
+</div>
+
+<h2>Where the major frameworks fit</h2>
+<table>
+  <thead><tr><th>Tool</th><th>Category</th><th>Core idea</th></tr></thead>
+  <tbody>
+    <tr><td>React</td><td>UI library</td><td>Components as functions of state, a virtual DOM diff, unidirectional data flow. Often paired with a router/state library rather than being "full" on its own.</td></tr>
+    <tr><td>Vue</td><td>Progressive framework</td><td>Template-based, reactive data binding; scales from a script tag to a full SPA framework.</td></tr>
+    <tr><td>Angular</td><td>Full framework</td><td>Opinionated, batteries-included: routing, forms, DI, and HTTP client ship built in. TypeScript-first.</td></tr>
+    <tr><td>Svelte</td><td>Compiler</td><td>No virtual DOM — compiles components into direct, surgical DOM-update instructions at build time.</td></tr>
+    <tr><td>Next.js / Nuxt</td><td>Meta-framework</td><td>Adds routing, server rendering, and data-fetching conventions on top of React/Vue.</td></tr>
+  </tbody>
+</table>
+
+<h3>Runtimes</h3>
+<table>
+  <thead><tr><th>Runtime</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Node.js</td><td>The original server-side runtime, built on V8. Massive package ecosystem via npm.</td></tr>
+    <tr><td>Deno</td><td>Secure by default (explicit permissions), native TypeScript support, ESM-first, built by Node's original creator.</td></tr>
+    <tr><td>Bun</td><td>Built on JavaScriptCore, focused on startup speed and an all-in-one toolchain (bundler, test runner, package manager included).</td></tr>
+  </tbody>
+</table>
+
+<h3>Build tools, in one sentence each</h3>
+<table>
+  <thead><tr><th>Tool</th><th>What it's for</th></tr></thead>
+  <tbody>
+    <tr><td>Vite</td><td>Dev server using native ESM (near-instant startup) + Rollup for production bundling.</td></tr>
+    <tr><td>Webpack</td><td>The long-standing, highly configurable module bundler most large legacy apps still run on.</td></tr>
+    <tr><td>esbuild</td><td>A bundler/transpiler written in Go — extremely fast, often used under the hood by other tools.</td></tr>
+    <tr><td>Babel</td><td>Transpiles modern syntax down to older JS for browser compatibility.</td></tr>
+    <tr><td>ESLint / Prettier</td><td>Linting (catch bugs and enforce patterns) and formatting (consistent style), respectively — different jobs, often used together.</td></tr>
+  </tbody>
+</table>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Does TypeScript run in the browser?<span class="chev">›</span></button>
+  <div class="qa__a"><p>No — browsers only understand JavaScript. TypeScript is compiled (or "transpiled") into plain JavaScript first, with all type annotations stripped out, and that output is what actually ships and runs.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the core difference between React and Svelte's approach?<span class="chev">›</span></button>
+  <div class="qa__a"><p>React does its diffing work at <em>runtime</em>, in the browser, using a virtual DOM to figure out the minimal set of real DOM changes needed. Svelte does that work at <em>build (compile) time</em>, generating imperative DOM-update code directly — there's no virtual DOM or diffing shipped to the browser at all.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What problem do bundlers like Vite or Webpack actually solve?<span class="chev">›</span></button>
+  <div class="qa__a"><p>They take a graph of many small source files (and non-JS assets like CSS/images) and combine, transform, and optimize them into a smaller number of production-ready files — handling things browsers can't do natively, like JSX/TypeScript compilation, minification, tree-shaking unused code, and code-splitting for lazy loading.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/modules/esm-vs-commonjs.html"><span class="lbl">← Previous</span>ESM vs CommonJS</a>
+  <a class="next" href="../../pages/dom/dom-events.html"><span class="lbl">Next</span>DOM & Events →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>

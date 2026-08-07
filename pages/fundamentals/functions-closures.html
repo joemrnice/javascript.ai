@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Functions, Scope & Closures · javascript.ai</title>
+<meta name="description" content="Function declarations, expressions, arrow functions, lexical scope, and closures explained practically.">
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<div class="shell">
+  <div class="topbar" id="topbar-mount"></div>
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar-mount" aria-label="Curriculum"></nav>
+    <main class="content">
+      <div class="content__inner">
+        <p class="breadcrumb"><a href="../../index.html">Home</a><span class="sep">/</span>Fundamentals<span class="sep">/</span>Functions &amp; Closures</p>
+<span class="eyebrow"><span class="str">fundamentals/02</span></span>
+<h1>Functions, Scope & Closures</h1>
+<p class="lede">Closures aren't an advanced trick — they're what happens every time a function remembers the world it was born into. Once this clicks, hooks, memoization, and module patterns all make sense.</p>
+
+<h2>Three ways to write a function</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">function-forms.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// 1. Function declaration — hoisted entirely (name + body)
+function add(a, b) { return a + b; }
+
+// 2. Function expression — only the variable is hoisted, not the assignment
+const subtract = function (a, b) { return a - b; };
+
+// 3. Arrow function — no own `this`, `arguments`, or `super`; can't be a constructor
+const multiply = (a, b) => a * b;
+
+add(2, 3);        // works even if called above the declaration
+subtract(5, 2);    // works only after this line executes
+multiply(4, 5);</code></pre>
+</div>
+
+<div class="callout tip">
+  <span class="callout__label">Why arrow functions exist</span>
+  <p>Arrow functions don't create their own <code>this</code> — they capture <code>this</code> from the enclosing scope at definition time. That makes them ideal for callbacks inside methods, and unsuitable as object methods or constructors. See the <a href="../../pages/advanced/this-keyword.html">this keyword lesson</a> for the full breakdown.</p>
+</div>
+
+<h2>Lexical scope</h2>
+<p>JavaScript uses <strong>lexical (static) scoping</strong>: a function's access to variables is determined by where it's <em>written</em> in the source, not where it's <em>called</em> from.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">lexical-scope.js</span><button class="code__copy">copy</button></div>
+  <pre><code>const city = "Freetown";
+
+function outer() {
+  const city = "Nairobi";
+  function inner() {
+    console.log(city); // "Nairobi" — resolved from where inner() was DEFINED
+  }
+  inner();
+}
+
+outer(); // logs "Nairobi", regardless of who calls outer() or from where</code></pre>
+</div>
+
+<h2>Closures</h2>
+<p>A closure is a function bundled together with references to its surrounding state — the <strong>lexical environment</strong>. That environment stays alive as long as something can still reach it, even after the outer function has returned.</p>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">counter-closure.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function makeCounter() {
+  let count = 0; // "private" — only reachable through the closure
+  return {
+    increment: () => ++count,
+    decrement: () => --count,
+    value: () => count,
+  };
+}
+
+const counterA = makeCounter();
+const counterB = makeCounter(); // a completely separate `count`
+
+counterA.increment();
+counterA.increment();
+counterB.increment();
+
+console.log(counterA.value()); // 2
+console.log(counterB.value()); // 1 — independent closures, independent state</code></pre>
+  <div class="output">
+    <span class="output__label">what's really happening</span>
+    <span class="output__line">Each call to <code>makeCounter()</code> creates a brand-new lexical environment holding its own <code>count</code>. The returned functions keep a live reference to that environment — this is JavaScript's native way to get private state without classes.</span>
+  </div>
+</div>
+
+<h3>The classic closure-in-a-loop bug</h3>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">loop-bug.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// ❌ With var: all three callbacks share ONE function-scoped `i`
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 10); // logs 3, 3, 3
+}
+
+// ✅ With let: each iteration gets its own block-scoped `i`
+for (let j = 0; j < 3; j++) {
+  setTimeout(() => console.log(j), 10); // logs 0, 1, 2
+}
+
+// ✅ Pre-ES6 fix: force a new scope with an IIFE
+for (var k = 0; k < 3; k++) {
+  (function (captured) {
+    setTimeout(() => console.log(captured), 10);
+  })(k);
+}</code></pre>
+</div>
+
+<h2>Practical uses of closures</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">memoize.js</span><button class="code__copy">copy</button></div>
+  <pre><code>function memoize(fn) {
+  const cache = new Map(); // captured by the closure, invisible from outside
+  return function (...args) {
+    const key = JSON.stringify(args);
+    if (cache.has(key)) return cache.get(key);
+    const result = fn(...args);
+    cache.set(key, result);
+    return result;
+  };
+}
+
+const slowSquare = n => { for (let i = 0; i < 1e6; i++); return n * n; };
+const fastSquare = memoize(slowSquare);
+
+fastSquare(9); // computed
+fastSquare(9); // returned instantly from cache</code></pre>
+</div>
+
+<h2>arguments, rest parameters, and default parameters</h2>
+<div class="code">
+  <div class="code__bar"><div class="code__dots"><span></span><span></span><span></span></div><span class="code__label">parameters.js</span><button class="code__copy">copy</button></div>
+  <pre><code>// `arguments` — array-like, NOT available in arrow functions
+function legacySum() {
+  return Array.from(arguments).reduce((a, b) => a + b, 0);
+}
+
+// Rest parameters — the modern, real-array replacement
+function sum(...numbers) {
+  return numbers.reduce((a, b) => a + b, 0);
+}
+
+// Default parameters — evaluated at call time, left to right
+function greet(name = "friend", greeting = `Hello, ${name}`) {
+  return greeting;
+}
+greet();          // "Hello, friend"
+greet("Kofi");     // "Hello, Kofi"</code></pre>
+</div>
+
+<h2>Interview questions on this topic</h2>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What is a closure, in one sentence?<span class="chev">›</span></button>
+  <div class="qa__a"><p>A closure is the combination of a function and the lexical environment it was declared in, which lets the function keep accessing those outer variables even after the outer function has finished executing.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>What's the difference between function declarations and expressions when it comes to hoisting?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Function declarations are fully hoisted — both the name and the implementation — so they can be called before their line in the source. Function expressions only hoist the variable binding (as <code>undefined</code> if <code>var</code>, or into the temporal dead zone if <code>let</code>/<code>const</code>); calling them before assignment throws.</p></div>
+</div>
+<div class="qa">
+  <button class="qa__q"><span class="idx">Q</span>Can closures cause memory leaks?<span class="chev">›</span></button>
+  <div class="qa__a"><p>Yes — if a closure holds a reference to a large object (like a DOM node or big array) and that closure is kept alive (e.g. attached as an event listener that's never removed), the referenced object can't be garbage collected even if it's otherwise unused. Always clean up listeners and long-lived closures you no longer need.</p></div>
+</div>
+
+<p><a href="../../interview-questions.html">See all interview questions →</a></p>
+
+<div class="prevnext">
+  <a class="prev" href="../../pages/fundamentals/variables-types.html"><span class="lbl">← Previous</span>Variables & Data Types</a>
+  <a class="next" href="../../pages/fundamentals/objects-arrays.html"><span class="lbl">Next</span>Objects & Arrays →</a>
+</div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>window.SITE_ROOT = '../../';</script>
+<script src="../../js/site-data.js"></script>
+<script src="../../js/include.js"></script>
+<script src="../../js/main.js"></script>
+</body>
+</html>
