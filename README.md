@@ -71,7 +71,7 @@ Then open `http://localhost:8000`.
 1. Push this repo to GitHub as `javascript.ai`.
 2. Go to **Settings → Pages**.
 3. Under "Build and deployment," select **Deploy from a branch**, branch `main`, folder `/ (root)`.
-4. Your site will be live at `https://<your-username>.github.io/javascript.ai/`.
+4. Your site will be live at `https://joemrnice.github.io/javascript.ai/`.
 
 ## Contributing
 
