@@ -32,7 +32,8 @@
   console.log(fn); // "I leak out of the block"
   console.log(bl); // ReferenceError: bl is not defined
 }
-
+    
+scopeDemo();
 console.log(typeof neverDeclared); // "undefined" — no error
 console.log(hoisted);              // undefined (not an error — var is hoisted)
 var hoisted = 1;
